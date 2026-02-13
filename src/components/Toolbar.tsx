@@ -6,26 +6,23 @@ import {
   FilePlus,
   LayoutTemplate,
   FolderOpen,
+  LogOut,
 } from 'lucide-react';
 import { useFlowStore } from '../store/useFlowStore';
+import { useAuthStore } from '../store/useAuthStore';
+import { downloadProjectJson } from '../utils/storage';
 import { TemplateModal } from './TemplateModal';
 import { ProjectManager } from './ProjectManager';
 
 export function Toolbar() {
-  const { projectName, setProjectName, newProject, saveCurrentProject, exportProject, importProject } =
+  const { projectName, projectId, nodes, edges, setProjectName, newProject, saveCurrentProject, importProject } =
     useFlowStore();
+  const logout = useAuthStore((s) => s.logout);
   const [showTemplates, setShowTemplates] = useState(false);
   const [showProjects, setShowProjects] = useState(false);
 
   const handleExport = () => {
-    const json = exportProject();
-    const blob = new Blob([json], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${projectName.replace(/\s+/g, '-').toLowerCase()}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+    downloadProjectJson({ id: projectId, name: projectName, nodes, edges });
   };
 
   const handleImport = () => {
@@ -111,6 +108,15 @@ export function Toolbar() {
             title="Import JSON"
           >
             <Upload size={14} />
+          </button>
+          <div className="w-px h-6 bg-gray-200" />
+          <button
+            onClick={logout}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md
+                       hover:bg-red-50 text-gray-600 hover:text-red-600 transition-colors"
+            title="Sign out"
+          >
+            <LogOut size={14} />
           </button>
         </div>
       </header>
