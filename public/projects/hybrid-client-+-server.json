@@ -1,0 +1,163 @@
+{
+  "id": "hybrid-client-server",
+  "name": "Hybrid Client + Server",
+  "nodes": [
+    {
+      "id": "t-website-4",
+      "type": "website",
+      "position": {
+        "x": 50,
+        "y": 250
+      },
+      "data": {
+        "label": "Website"
+      }
+    },
+    {
+      "id": "t-gtm-client-4",
+      "type": "gtmClient",
+      "position": {
+        "x": 320,
+        "y": 250
+      },
+      "data": {
+        "label": "GTM Client",
+        "containerType": "client",
+        "loadMethod": "1st-party",
+        "customDomain": "gtm.example.com"
+      }
+    },
+    {
+      "id": "t-ga4-4",
+      "type": "tag",
+      "position": {
+        "x": 620,
+        "y": 100
+      },
+      "data": {
+        "label": "GA4 (Client)",
+        "tagType": "ga4",
+        "notes": "Client-side analytics"
+      }
+    },
+    {
+      "id": "t-hotjar-4",
+      "type": "tag",
+      "position": {
+        "x": 620,
+        "y": 240
+      },
+      "data": {
+        "label": "Hotjar",
+        "tagType": "hotjar",
+        "notes": "Heatmaps & recordings"
+      }
+    },
+    {
+      "id": "t-stream-4",
+      "type": "dataStream",
+      "position": {
+        "x": 620,
+        "y": 400
+      },
+      "data": {
+        "label": "Server Stream",
+        "protocol": "HTTP"
+      }
+    },
+    {
+      "id": "t-gtm-server-4",
+      "type": "gtmServer",
+      "position": {
+        "x": 900,
+        "y": 400
+      },
+      "data": {
+        "label": "GTM Server",
+        "containerType": "server",
+        "customDomain": "sgtm.example.com"
+      }
+    },
+    {
+      "id": "t-meta-4",
+      "type": "tag",
+      "position": {
+        "x": 1180,
+        "y": 330
+      },
+      "data": {
+        "label": "Meta CAPI",
+        "tagType": "meta-pixel",
+        "accessToken": "",
+        "notes": "Server-side conversions"
+      }
+    },
+    {
+      "id": "t-gads-4",
+      "type": "tag",
+      "position": {
+        "x": 1180,
+        "y": 470
+      },
+      "data": {
+        "label": "Google Ads",
+        "tagType": "google-ads",
+        "conversionLabel": "",
+        "notes": "Enhanced conversions"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "te4-1",
+      "source": "t-website-4",
+      "target": "t-gtm-client-4",
+      "type": "dataFlow",
+      "animated": true
+    },
+    {
+      "id": "te4-2",
+      "source": "t-gtm-client-4",
+      "target": "t-ga4-4",
+      "type": "dataFlow",
+      "animated": true
+    },
+    {
+      "id": "te4-3",
+      "source": "t-gtm-client-4",
+      "target": "t-hotjar-4",
+      "type": "dataFlow",
+      "animated": true
+    },
+    {
+      "id": "te4-4",
+      "source": "t-gtm-client-4",
+      "target": "t-stream-4",
+      "type": "dataFlow",
+      "animated": true
+    },
+    {
+      "id": "te4-5",
+      "source": "t-stream-4",
+      "target": "t-gtm-server-4",
+      "type": "dataFlow",
+      "animated": true
+    },
+    {
+      "id": "te4-6",
+      "source": "t-gtm-server-4",
+      "target": "t-meta-4",
+      "type": "dataFlow",
+      "animated": true
+    },
+    {
+      "id": "te4-7",
+      "source": "t-gtm-server-4",
+      "target": "t-gads-4",
+      "type": "dataFlow",
+      "animated": true
+    }
+  ],
+  "createdAt": "2026-02-13T16:18:49.892Z",
+  "updatedAt": "2026-02-13T16:18:49.892Z"
+}

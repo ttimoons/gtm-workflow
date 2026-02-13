@@ -1,3 +1,8 @@
 {
-  "files": []
+  "files": [
+    "basic-ga4-setup.json",
+    "hybrid-client-+-server.json",
+    "multi-platform-e-commerce.json",
+    "server-side-with-facebook-capi.json"
+  ]
 }
