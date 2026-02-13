@@ -24,7 +24,7 @@ export const templates: Template[] = [
         id: 't-gtm-client-1',
         type: 'gtmClient',
         position: { x: 350, y: 200 },
-        data: { label: 'GTM Client', containerId: 'GTM-XXXXXX', containerType: 'client' as const },
+        data: { label: 'GTM Client', containerId: 'GTM-XXXXXX', containerType: 'client' as const, loadMethod: 'script' as const },
       },
       {
         id: 't-ga4-1',
@@ -60,7 +60,7 @@ export const templates: Template[] = [
         id: 't-gtm-client-2',
         type: 'gtmClient',
         position: { x: 320, y: 250 },
-        data: { label: 'GTM Client', containerId: 'GTM-CLIENT', containerType: 'client' as const },
+        data: { label: 'GTM Client', containerId: 'GTM-CLIENT', containerType: 'client' as const, loadMethod: '1st-party' as const, customDomain: 'gtm.example.com' },
       },
       {
         id: 't-stream-1',
@@ -72,7 +72,7 @@ export const templates: Template[] = [
         id: 't-gtm-server-2',
         type: 'gtmServer',
         position: { x: 830, y: 250 },
-        data: { label: 'GTM Server', containerId: 'GTM-SERVER', containerType: 'server' as const },
+        data: { label: 'GTM Server', containerId: 'GTM-SERVER', containerType: 'server' as const, customDomain: 'sgtm.example.com' },
       },
       {
         id: 't-ga4-2',
@@ -84,13 +84,13 @@ export const templates: Template[] = [
         id: 't-meta-2',
         type: 'tag',
         position: { x: 1120, y: 250 },
-        data: { label: 'Meta CAPI', tagType: 'meta-pixel' as const, notes: 'Conversions API' },
+        data: { label: 'Meta CAPI', tagType: 'meta-pixel' as const, accessToken: '', notes: 'Conversions API' },
       },
       {
         id: 't-gads-2',
         type: 'tag',
         position: { x: 1120, y: 400 },
-        data: { label: 'Google Ads', tagType: 'google-ads' as const, trackingId: 'AW-XXXXXXXXX' },
+        data: { label: 'Google Ads', tagType: 'google-ads' as const, trackingId: 'AW-XXXXXXXXX', conversionLabel: '' },
       },
     ] as AppNode[],
     edges: [
@@ -117,7 +117,7 @@ export const templates: Template[] = [
         id: 't-gtm-client-3',
         type: 'gtmClient',
         position: { x: 350, y: 280 },
-        data: { label: 'GTM Client', containerId: 'GTM-ECOMM', containerType: 'client' as const },
+        data: { label: 'GTM Client', containerId: 'GTM-ECOMM', containerType: 'client' as const, loadMethod: 'script' as const },
       },
       {
         id: 't-ga4-3',
@@ -174,7 +174,7 @@ export const templates: Template[] = [
         id: 't-gtm-client-4',
         type: 'gtmClient',
         position: { x: 320, y: 250 },
-        data: { label: 'GTM Client', containerType: 'client' as const },
+        data: { label: 'GTM Client', containerType: 'client' as const, loadMethod: '1st-party' as const, customDomain: 'gtm.example.com' },
       },
       {
         id: 't-ga4-4',
@@ -198,19 +198,19 @@ export const templates: Template[] = [
         id: 't-gtm-server-4',
         type: 'gtmServer',
         position: { x: 900, y: 400 },
-        data: { label: 'GTM Server', containerType: 'server' as const },
+        data: { label: 'GTM Server', containerType: 'server' as const, customDomain: 'sgtm.example.com' },
       },
       {
         id: 't-meta-4',
         type: 'tag',
         position: { x: 1180, y: 330 },
-        data: { label: 'Meta CAPI', tagType: 'meta-pixel' as const, notes: 'Server-side conversions' },
+        data: { label: 'Meta CAPI', tagType: 'meta-pixel' as const, accessToken: '', notes: 'Server-side conversions' },
       },
       {
         id: 't-gads-4',
         type: 'tag',
         position: { x: 1180, y: 470 },
-        data: { label: 'Google Ads', tagType: 'google-ads' as const, notes: 'Enhanced conversions' },
+        data: { label: 'Google Ads', tagType: 'google-ads' as const, conversionLabel: '', notes: 'Enhanced conversions' },
       },
     ] as AppNode[],
     edges: [

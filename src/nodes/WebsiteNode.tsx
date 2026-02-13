@@ -3,9 +3,16 @@ import { Globe } from 'lucide-react';
 import { BaseNode } from './BaseNode';
 import type { WebsiteNode as WebsiteNodeType } from '../store/types';
 
-export function WebsiteNode({ data }: NodeProps<WebsiteNodeType>) {
+export function WebsiteNode({ id, data }: NodeProps<WebsiteNodeType>) {
   return (
-    <BaseNode label={data.label} icon={<Globe size={16} />} color="bg-emerald-600">
+    <BaseNode
+      nodeId={id}
+      label={data.label}
+      accountId={data.accountId}
+      idPlaceholder="Domain (example.com)"
+      icon={<Globe size={16} />}
+      color="bg-emerald-600"
+    >
       {data.url && <p className="mb-0.5">{data.url}</p>}
       {data.dataLayerVariables && data.dataLayerVariables.length > 0 && (
         <p className="text-gray-400">DL: {data.dataLayerVariables.join(', ')}</p>

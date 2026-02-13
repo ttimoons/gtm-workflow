@@ -20,37 +20,49 @@ export type TagType =
 
 export type WebsiteNodeData = {
   label: string;
+  accountId?: string;
   url?: string;
   dataLayerVariables?: string[];
 };
 
+export type GtmLoadMethod = 'script' | '1st-party' | 'server-side';
+
 export type GtmContainerNodeData = {
   label: string;
+  accountId?: string;
   containerId?: string;
   containerType: 'client' | 'server';
+  loadMethod?: GtmLoadMethod;
+  customDomain?: string;
 };
 
 export type TagNodeData = {
   label: string;
+  accountId?: string;
   tagType: TagType;
   trackingId?: string;
+  conversionLabel?: string;
+  accessToken?: string;
   notes?: string;
 };
 
 export type TriggerNodeData = {
   label: string;
+  accountId?: string;
   triggerType: 'pageview' | 'click' | 'custom-event' | 'form-submit' | 'scroll' | 'timer' | 'other';
   eventName?: string;
 };
 
 export type VariableNodeData = {
   label: string;
+  accountId?: string;
   variableType: 'dataLayer' | 'javascript' | 'constant' | 'cookie' | 'url' | 'other';
   variableName?: string;
 };
 
 export type DataStreamNodeData = {
   label: string;
+  accountId?: string;
   protocol?: 'HTTP' | 'Webhook' | 'API';
 };
 

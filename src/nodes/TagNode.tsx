@@ -1,14 +1,43 @@
 import type { NodeProps } from '@xyflow/react';
+import type { ChangeEvent } from 'react';
 import { BaseNode } from './BaseNode';
 import type { TagNode as TagNodeType } from '../store/types';
 import { getTagConfig } from '../data/tagRegistry';
+import { useFlowStore } from '../store/useFlowStore';
 
-export function TagNode({ data }: NodeProps<TagNodeType>) {
+export function TagNode({ id, data }: NodeProps<TagNodeType>) {
   const config = getTagConfig(data.tagType);
+  const updateNodeData = useFlowStore((s) => s.updateNodeData);
+
+  const onExtraFieldChange = (key: string) => (e: ChangeEvent<HTMLInputElement>) => {
+    updateNodeData(id, { [key]: e.target.value });
+  };
 
   return (
-    <BaseNode label={data.label} icon={config.icon} color={config.color}>
-      {data.trackingId && <p className="mb-0.5">ID: {data.trackingId}</p>}
+    <BaseNode
+      nodeId={id}
+      label={data.label}
+      accountId={data.accountId}
+      idPlaceholder={config.idPlaceholder}
+      icon={config.icon}
+      color={config.color}
+    >
+      {config.extraFields && config.extraFields.length > 0 && (
+        <div className="flex flex-col gap-1 mb-1">
+          {config.extraFields.map((field) => (
+            <input
+              key={field.key}
+              value={(data as Record<string, unknown>)[field.key] as string ?? ''}
+              onChange={onExtraFieldChange(field.key)}
+              placeholder={field.placeholder}
+              className="w-full text-xs text-gray-700 bg-gray-50 border border-gray-200
+                         rounded px-2 py-1 outline-none focus:border-blue-400 focus:ring-1
+                         focus:ring-blue-200 placeholder-gray-400 font-mono"
+              spellCheck={false}
+            />
+          ))}
+        </div>
+      )}
       {data.notes && <p className="text-gray-400">{data.notes}</p>}
     </BaseNode>
   );
