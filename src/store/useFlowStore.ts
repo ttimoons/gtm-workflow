@@ -57,12 +57,12 @@ type FlowState = {
   distributeSelected: (axis: 'horizontal' | 'vertical') => void;
 
   saveCurrentProject: () => void;
-  loadProjectById: (id: string) => void;
+  loadProjectById: (id: string) => Promise<void>;
   loadFromTemplate: (nodes: AppNode[], edges: AppEdge[], name: string) => void;
   newProject: () => void;
   exportProject: () => string;
   importProject: (json: string) => void;
-  loadLastProject: () => void;
+  loadLastProject: () => Promise<void>;
 };
 
 export const useFlowStore = create<FlowState>()((set, get) => ({
@@ -269,8 +269,8 @@ export const useFlowStore = create<FlowState>()((set, get) => ({
     });
   },
 
-  loadProjectById: (id) => {
-    const project = loadProject(id);
+  loadProjectById: async (id) => {
+    const project = await loadProject(id);
     if (project) {
       set({
         projectId: project.id,
@@ -326,10 +326,10 @@ export const useFlowStore = create<FlowState>()((set, get) => ({
     });
   },
 
-  loadLastProject: () => {
+  loadLastProject: async () => {
     const activeId = getActiveProjectId();
     if (activeId) {
-      get().loadProjectById(activeId);
+      await get().loadProjectById(activeId);
     }
   },
 }));
