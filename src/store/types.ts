@@ -3,6 +3,7 @@ import type { Node, Edge } from '@xyflow/react';
 // --- Tag types ---
 
 export type TagType =
+  | 'google-tag'
   | 'ga4'
   | 'meta-pixel'
   | 'google-ads'
@@ -14,7 +15,13 @@ export type TagType =
   | 'custom-html'
   | 'floodlight'
   | 'hotjar'
-  | 'clarity';
+  | 'clarity'
+  | 'data-tag'
+  | 'cmp';
+
+// --- Exposure / vulnerability flags ---
+
+export type ExposureFlag = 'itp' | 'ad-blocker' | 'client-side';
 
 // --- Node data types ---
 
@@ -25,7 +32,7 @@ export type WebsiteNodeData = {
   dataLayerVariables?: string[];
 };
 
-export type GtmLoadMethod = 'script' | '1st-party' | 'server-side';
+export type GtmLoadMethod = 'script' | '1st-party' | 'server-side' | 'gateway';
 
 export type GtmContainerNodeData = {
   label: string;
@@ -34,15 +41,23 @@ export type GtmContainerNodeData = {
   containerType: 'client' | 'server';
   loadMethod?: GtmLoadMethod;
   customDomain?: string;
+  exposure?: ExposureFlag[];
 };
+
+export type CmpMode = 'native' | 'gtm';
 
 export type TagNodeData = {
   label: string;
   accountId?: string;
   tagType: TagType;
   trackingId?: string;
+  propertyName?: string;
+  streamName?: string;
+  eventName?: string;
   conversionLabel?: string;
   accessToken?: string;
+  cmpMode?: CmpMode;
+  exposure?: ExposureFlag[];
   notes?: string;
 };
 

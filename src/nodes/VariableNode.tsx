@@ -3,7 +3,7 @@ import { Braces } from 'lucide-react';
 import { BaseNode } from './BaseNode';
 import type { VariableNode as VariableNodeType } from '../store/types';
 
-export function VariableNode({ id, data }: NodeProps<VariableNodeType>) {
+export function VariableNode({ id, data, selected }: NodeProps<VariableNodeType>) {
   return (
     <BaseNode
       nodeId={id}
@@ -12,6 +12,7 @@ export function VariableNode({ id, data }: NodeProps<VariableNodeType>) {
       idPlaceholder="Variable name"
       icon={<Braces size={16} />}
       color="bg-purple-500"
+      selected={selected}
     >
       <p className="mb-0.5">Type: {data.variableType}</p>
       {data.variableName && <p className="text-gray-400">Name: {data.variableName}</p>}

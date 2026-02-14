@@ -1,16 +1,25 @@
 import type { NodeProps } from '@xyflow/react';
 import type { ChangeEvent } from 'react';
 import { BaseNode } from './BaseNode';
-import type { TagNode as TagNodeType } from '../store/types';
+import type { TagNode as TagNodeType, CmpMode } from '../store/types';
 import { getTagConfig } from '../data/tagRegistry';
 import { useFlowStore } from '../store/useFlowStore';
 
-export function TagNode({ id, data }: NodeProps<TagNodeType>) {
+const CMP_MODES: { value: CmpMode; label: string }[] = [
+  { value: 'native', label: 'Native (script)' },
+  { value: 'gtm', label: 'Via GTM' },
+];
+
+export function TagNode({ id, data, selected }: NodeProps<TagNodeType>) {
   const config = getTagConfig(data.tagType);
   const updateNodeData = useFlowStore((s) => s.updateNodeData);
 
   const onExtraFieldChange = (key: string) => (e: ChangeEvent<HTMLInputElement>) => {
     updateNodeData(id, { [key]: e.target.value });
+  };
+
+  const onCmpModeChange = (e: ChangeEvent<HTMLSelectElement>) => {
+    updateNodeData(id, { cmpMode: e.target.value as CmpMode });
   };
 
   return (
@@ -21,7 +30,26 @@ export function TagNode({ id, data }: NodeProps<TagNodeType>) {
       idPlaceholder={config.idPlaceholder}
       icon={config.icon}
       color={config.color}
+      selected={selected}
+      exposure={data.exposure}
+      showExposure
     >
+      {/* CMP mode selector */}
+      {data.tagType === 'cmp' && (
+        <div className="mb-1">
+          <select
+            value={data.cmpMode ?? 'native'}
+            onChange={onCmpModeChange}
+            className="w-full text-xs text-gray-700 bg-gray-50 border border-gray-200
+                       rounded px-2 py-1 outline-none focus:border-blue-400 focus:ring-1
+                       focus:ring-blue-200"
+          >
+            {CMP_MODES.map((m) => (
+              <option key={m.value} value={m.value}>{m.label}</option>
+            ))}
+          </select>
+        </div>
+      )}
       {config.extraFields && config.extraFields.length > 0 && (
         <div className="flex flex-col gap-1 mb-1">
           {config.extraFields.map((field) => (

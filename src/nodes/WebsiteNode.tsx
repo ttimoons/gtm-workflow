@@ -3,7 +3,7 @@ import { Globe } from 'lucide-react';
 import { BaseNode } from './BaseNode';
 import type { WebsiteNode as WebsiteNodeType } from '../store/types';
 
-export function WebsiteNode({ id, data }: NodeProps<WebsiteNodeType>) {
+export function WebsiteNode({ id, data, selected }: NodeProps<WebsiteNodeType>) {
   return (
     <BaseNode
       nodeId={id}
@@ -12,6 +12,7 @@ export function WebsiteNode({ id, data }: NodeProps<WebsiteNodeType>) {
       idPlaceholder="Domain (example.com)"
       icon={<Globe size={16} />}
       color="bg-emerald-600"
+      selected={selected}
     >
       {data.url && <p className="mb-0.5">{data.url}</p>}
       {data.dataLayerVariables && data.dataLayerVariables.length > 0 && (

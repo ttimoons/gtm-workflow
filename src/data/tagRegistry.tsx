@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Code, BarChart3, MousePointer2 } from 'lucide-react';
+import { Code, BarChart3, MousePointer2, Database, Shield } from 'lucide-react';
 import type { TagType } from '../store/types';
 
 export type TagExtraField = {
@@ -24,10 +24,29 @@ function SvgIcon({ children, viewBox = '0 0 24 24' }: { children: ReactNode; vie
 }
 
 const TAG_CONFIGS: Record<TagType, TagConfig> = {
+  'google-tag': {
+    label: 'Google Tag',
+    color: 'bg-blue-500',
+    idPlaceholder: 'GT-XXXXXX / G-XXXXXXXXXX',
+    extraFields: [
+      { key: 'propertyName', placeholder: 'GA4 Property name' },
+      { key: 'streamName', placeholder: 'Stream name' },
+    ],
+    icon: (
+      <SvgIcon>
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z" />
+      </SvgIcon>
+    ),
+  },
   'ga4': {
-    label: 'Google Analytics 4',
+    label: 'GA4 Event',
     color: 'bg-orange-500',
     idPlaceholder: 'G-XXXXXXXXXX',
+    extraFields: [
+      { key: 'propertyName', placeholder: 'GA4 Property name' },
+      { key: 'streamName', placeholder: 'Stream name' },
+      { key: 'eventName', placeholder: 'Event name (e.g. purchase)' },
+    ],
     icon: (
       <SvgIcon>
         <path d="M22 3.41l-.12-1.26-1.2.4a12.84 12.84 0 0 0-3.67 1.87A13.34 13.34 0 0 0 12 0a13.34 13.34 0 0 0-5 4.42A12.84 12.84 0 0 0 3.32 2.55l-1.2-.4L2 3.41A13.49 13.49 0 0 0 2 12a10 10 0 0 0 20 0A13.49 13.49 0 0 0 22 3.41Z" />
@@ -137,6 +156,21 @@ const TAG_CONFIGS: Record<TagType, TagConfig> = {
     color: 'bg-blue-500',
     idPlaceholder: 'Project ID',
     icon: <MousePointer2 size={16} />,
+  },
+  'data-tag': {
+    label: 'Data Tag',
+    color: 'bg-teal-600',
+    idPlaceholder: 'Tag ID / Endpoint',
+    extraFields: [
+      { key: 'conversionLabel', placeholder: 'Collection endpoint' },
+    ],
+    icon: <Database size={16} />,
+  },
+  'cmp': {
+    label: 'CMP (Consent)',
+    color: 'bg-emerald-700',
+    idPlaceholder: 'CMP ID (e.g. OneTrust, Cookiebot)',
+    icon: <Shield size={16} />,
   },
 };
 

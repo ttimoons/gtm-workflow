@@ -9,9 +9,10 @@ const LOAD_METHODS: { value: GtmLoadMethod; label: string }[] = [
   { value: 'script', label: 'Standard (gtm.js)' },
   { value: '1st-party', label: '1st Party (custom domain)' },
   { value: 'server-side', label: 'Server-side injected' },
+  { value: 'gateway', label: 'Gateway (Cloudflare)' },
 ];
 
-export function GtmClientNode({ id, data }: NodeProps<GtmClientNodeType>) {
+export function GtmClientNode({ id, data, selected }: NodeProps<GtmClientNodeType>) {
   const updateNodeData = useFlowStore((s) => s.updateNodeData);
 
   const onLoadMethodChange = (e: ChangeEvent<HTMLSelectElement>) => {
@@ -30,6 +31,9 @@ export function GtmClientNode({ id, data }: NodeProps<GtmClientNodeType>) {
       idPlaceholder="GTM-XXXXXX"
       icon={<Container size={16} />}
       color="bg-blue-600"
+      selected={selected}
+      exposure={data.exposure}
+      showExposure
     >
       <div className="flex flex-col gap-1">
         <select
@@ -43,11 +47,11 @@ export function GtmClientNode({ id, data }: NodeProps<GtmClientNodeType>) {
             <option key={m.value} value={m.value}>{m.label}</option>
           ))}
         </select>
-        {(data.loadMethod === '1st-party' || data.loadMethod === 'server-side') && (
+        {(data.loadMethod === '1st-party' || data.loadMethod === 'server-side' || data.loadMethod === 'gateway') && (
           <input
             value={data.customDomain ?? ''}
             onChange={onCustomDomainChange}
-            placeholder="Custom domain (e.g. gtm.example.com)"
+            placeholder={data.loadMethod === 'gateway' ? 'CF Worker route (e.g. cdn.example.com/gtm)' : 'Custom domain (e.g. gtm.example.com)'}
             className="w-full text-xs text-gray-700 bg-gray-50 border border-gray-200
                        rounded px-2 py-1 outline-none focus:border-blue-400 focus:ring-1
                        focus:ring-blue-200 placeholder-gray-400 font-mono"

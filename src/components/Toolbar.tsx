@@ -7,6 +7,16 @@ import {
   LayoutTemplate,
   FolderOpen,
   LogOut,
+  Undo2,
+  Redo2,
+  AlignStartVertical,
+  AlignCenterVertical,
+  AlignEndVertical,
+  AlignStartHorizontal,
+  AlignCenterHorizontal,
+  AlignEndHorizontal,
+  GripHorizontal,
+  GripVertical,
 } from 'lucide-react';
 import { useFlowStore } from '../store/useFlowStore';
 import { useAuthStore } from '../store/useAuthStore';
@@ -17,6 +27,13 @@ import { ProjectManager } from './ProjectManager';
 export function Toolbar() {
   const { projectName, projectId, nodes, edges, setProjectName, newProject, saveCurrentProject, importProject } =
     useFlowStore();
+  const undo = useFlowStore((s) => s.undo);
+  const redo = useFlowStore((s) => s.redo);
+  const past = useFlowStore((s) => s.past);
+  const future = useFlowStore((s) => s.future);
+  const alignSelected = useFlowStore((s) => s.alignSelected);
+  const distributeSelected = useFlowStore((s) => s.distributeSelected);
+  const selectedCount = useFlowStore((s) => s.nodes.filter((n) => n.selected).length);
   const logout = useAuthStore((s) => s.logout);
   const [showTemplates, setShowTemplates] = useState(false);
   const [showProjects, setShowProjects] = useState(false);
@@ -60,6 +77,94 @@ export function Toolbar() {
         </div>
 
         <div className="flex items-center gap-1.5">
+          <button
+            onClick={undo}
+            disabled={past.length === 0}
+            className="flex items-center gap-1.5 px-2 py-1.5 text-sm rounded-md
+                       hover:bg-gray-100 text-gray-600 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            title="Undo (⌘Z)"
+          >
+            <Undo2 size={14} />
+          </button>
+          <button
+            onClick={redo}
+            disabled={future.length === 0}
+            className="flex items-center gap-1.5 px-2 py-1.5 text-sm rounded-md
+                       hover:bg-gray-100 text-gray-600 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            title="Redo (⌘⇧Z)"
+          >
+            <Redo2 size={14} />
+          </button>
+          {selectedCount >= 2 && (
+            <>
+              <div className="w-px h-6 bg-gray-200" />
+              <div className="flex items-center gap-0.5 bg-gray-50 rounded-md px-1 py-0.5">
+                <button
+                  onClick={() => alignSelected('left')}
+                  className="p-1 rounded hover:bg-gray-200 text-gray-500 hover:text-gray-700 transition-colors"
+                  title="Align left"
+                >
+                  <AlignStartVertical size={14} />
+                </button>
+                <button
+                  onClick={() => alignSelected('center-x')}
+                  className="p-1 rounded hover:bg-gray-200 text-gray-500 hover:text-gray-700 transition-colors"
+                  title="Align center"
+                >
+                  <AlignCenterVertical size={14} />
+                </button>
+                <button
+                  onClick={() => alignSelected('right')}
+                  className="p-1 rounded hover:bg-gray-200 text-gray-500 hover:text-gray-700 transition-colors"
+                  title="Align right"
+                >
+                  <AlignEndVertical size={14} />
+                </button>
+                <div className="w-px h-4 bg-gray-300 mx-0.5" />
+                <button
+                  onClick={() => alignSelected('top')}
+                  className="p-1 rounded hover:bg-gray-200 text-gray-500 hover:text-gray-700 transition-colors"
+                  title="Align top"
+                >
+                  <AlignStartHorizontal size={14} />
+                </button>
+                <button
+                  onClick={() => alignSelected('center-y')}
+                  className="p-1 rounded hover:bg-gray-200 text-gray-500 hover:text-gray-700 transition-colors"
+                  title="Align middle"
+                >
+                  <AlignCenterHorizontal size={14} />
+                </button>
+                <button
+                  onClick={() => alignSelected('bottom')}
+                  className="p-1 rounded hover:bg-gray-200 text-gray-500 hover:text-gray-700 transition-colors"
+                  title="Align bottom"
+                >
+                  <AlignEndHorizontal size={14} />
+                </button>
+                {selectedCount >= 3 && (
+                  <>
+                    <div className="w-px h-4 bg-gray-300 mx-0.5" />
+                    <button
+                      onClick={() => distributeSelected('horizontal')}
+                      className="p-1 rounded hover:bg-gray-200 text-gray-500 hover:text-gray-700 transition-colors"
+                      title="Distribute horizontally"
+                    >
+                      <GripHorizontal size={14} />
+                    </button>
+                    <button
+                      onClick={() => distributeSelected('vertical')}
+                      className="p-1 rounded hover:bg-gray-200 text-gray-500 hover:text-gray-700 transition-colors"
+                      title="Distribute vertically"
+                    >
+                      <GripVertical size={14} />
+                    </button>
+                  </>
+                )}
+              </div>
+            </>
+          )}
+          <div className="w-px h-6 bg-gray-200" />
           <button
             onClick={() => setShowTemplates(true)}
             className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md

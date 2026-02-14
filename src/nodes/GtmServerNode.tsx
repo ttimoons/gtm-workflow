@@ -5,7 +5,7 @@ import { BaseNode } from './BaseNode';
 import type { GtmServerNode as GtmServerNodeType } from '../store/types';
 import { useFlowStore } from '../store/useFlowStore';
 
-export function GtmServerNode({ id, data }: NodeProps<GtmServerNodeType>) {
+export function GtmServerNode({ id, data, selected }: NodeProps<GtmServerNodeType>) {
   const updateNodeData = useFlowStore((s) => s.updateNodeData);
 
   const onCustomDomainChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -20,6 +20,7 @@ export function GtmServerNode({ id, data }: NodeProps<GtmServerNodeType>) {
       idPlaceholder="GTM-XXXXXX"
       icon={<Server size={16} />}
       color="bg-indigo-700"
+      selected={selected}
     >
       <input
         value={data.customDomain ?? ''}

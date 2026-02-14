@@ -3,8 +3,6 @@ import {
   Container,
   Server,
   ArrowRightLeft,
-  Zap,
-  Braces,
 } from 'lucide-react';
 import { SidebarItem } from './SidebarItem';
 import { getAllTagTypes } from '../data/tagRegistry';
@@ -58,23 +56,6 @@ export function Sidebar() {
         />
       ))}
 
-      <h2 className="text-xs font-semibold uppercase text-gray-400 tracking-wider mt-4 mb-1">
-        Logic
-      </h2>
-      <SidebarItem
-        nodeType="trigger"
-        label="Trigger"
-        icon={<Zap size={14} />}
-        color="bg-amber-500"
-        data={{ triggerType: 'pageview' }}
-      />
-      <SidebarItem
-        nodeType="variable"
-        label="Variable"
-        icon={<Braces size={14} />}
-        color="bg-purple-500"
-        data={{ variableType: 'dataLayer' }}
-      />
     </aside>
   );
 }
