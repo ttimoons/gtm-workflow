@@ -33,6 +33,7 @@ export function TagNode({ id, data, selected }: NodeProps<TagNodeType>) {
       selected={selected}
       exposure={data.exposure}
       showExposure
+      temporary={data.temporary}
     >
       {/* CMP mode selector */}
       {data.tagType === 'cmp' && (

@@ -13,6 +13,7 @@ export function DataStreamNode({ id, data, selected }: NodeProps<DataStreamNodeT
       icon={<ArrowRightLeft size={16} />}
       color="bg-cyan-500"
       selected={selected}
+      temporary={data.temporary}
     >
       {data.protocol && <p>Protocol: {data.protocol}</p>}
     </BaseNode>

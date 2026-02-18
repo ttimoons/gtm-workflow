@@ -56,6 +56,11 @@ type FlowState = {
   alignSelected: (axis: 'left' | 'center-x' | 'right' | 'top' | 'center-y' | 'bottom') => void;
   distributeSelected: (axis: 'horizontal' | 'vertical') => void;
 
+  // Temporary nodes
+  confirmNode: (nodeId: string) => void;
+  deleteTemporaryNodes: () => void;
+  getTemporaryNodeCount: () => number;
+
   saveCurrentProject: () => void;
   loadProjectById: (id: string) => Promise<void>;
   loadFromTemplate: (nodes: AppNode[], edges: AppEdge[], name: string) => void;
@@ -252,6 +257,28 @@ export const useFlowStore = create<FlowState>()((set, get) => ({
         };
       }) as AppNode[],
     });
+  },
+
+  // ---- Temporary nodes ----
+
+  confirmNode: (nodeId) => {
+    get().pushSnapshot();
+    set({
+      nodes: get().nodes.map((n) =>
+        n.id === nodeId ? { ...n, data: { ...n.data, temporary: false } } : n
+      ) as AppNode[],
+    });
+  },
+
+  deleteTemporaryNodes: () => {
+    get().pushSnapshot();
+    set({
+      nodes: get().nodes.filter((n) => !n.data.temporary) as AppNode[],
+    });
+  },
+
+  getTemporaryNodeCount: () => {
+    return get().nodes.filter((n) => n.data.temporary).length;
   },
 
   // ---- Project management ----

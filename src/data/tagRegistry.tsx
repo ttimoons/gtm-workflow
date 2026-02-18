@@ -157,6 +157,71 @@ const TAG_CONFIGS: Record<TagType, TagConfig> = {
     idPlaceholder: 'Project ID',
     icon: <MousePointer2 size={16} />,
   },
+  'amplitude': {
+    label: 'Amplitude',
+    color: 'bg-indigo-600',
+    idPlaceholder: 'API Key',
+    extraFields: [
+      { key: 'projectName', placeholder: 'Project name' },
+    ],
+    icon: (
+      <SvgIcon>
+        <path d="M12 2L2 19.5h5l5-8.5 3 8.5h7L12 2z" />
+      </SvgIcon>
+    ),
+  },
+  'posthog': {
+    label: 'PostHog',
+    color: 'bg-yellow-600',
+    idPlaceholder: 'Project API Key',
+    extraFields: [
+      { key: 'instanceUrl', placeholder: 'Instance URL (e.g. app.posthog.com)' },
+    ],
+    icon: (
+      <SvgIcon>
+        <path d="M3 3h6v6H3V3zm6 6h6v6H9V9zm6-6h6v6h-6V3zm0 12h6v6h-6v-6zm-6 0h6v6H9v-6zM3 15h6v6H3v-6z" />
+      </SvgIcon>
+    ),
+  },
+  'mixpanel': {
+    label: 'Mixpanel',
+    color: 'bg-purple-600',
+    idPlaceholder: 'Project Token',
+    extraFields: [
+      { key: 'projectName', placeholder: 'Project name' },
+    ],
+    icon: (
+      <SvgIcon>
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z" />
+      </SvgIcon>
+    ),
+  },
+  'rudderstack': {
+    label: 'RudderStack',
+    color: 'bg-cyan-600',
+    idPlaceholder: 'Write Key',
+    extraFields: [
+      { key: 'dataPlaneUrl', placeholder: 'Data Plane URL' },
+    ],
+    icon: (
+      <SvgIcon>
+        <path d="M2 12h4v8H2v-8zm6-8h4v16H8V4zm6 4h4v12h-4V8zm6-6h4v20h-4V2z" />
+      </SvgIcon>
+    ),
+  },
+  'segment': {
+    label: 'Segment',
+    color: 'bg-green-600',
+    idPlaceholder: 'Write Key',
+    extraFields: [
+      { key: 'sourceName', placeholder: 'Source name' },
+    ],
+    icon: (
+      <SvgIcon>
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+      </SvgIcon>
+    ),
+  },
   'data-tag': {
     label: 'Data Tag',
     color: 'bg-teal-600',

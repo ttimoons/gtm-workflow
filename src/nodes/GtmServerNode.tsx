@@ -21,6 +21,7 @@ export function GtmServerNode({ id, data, selected }: NodeProps<GtmServerNodeTyp
       icon={<Server size={16} />}
       color="bg-indigo-700"
       selected={selected}
+      temporary={data.temporary}
     >
       <input
         value={data.customDomain ?? ''}

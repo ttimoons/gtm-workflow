@@ -1,8 +1,10 @@
 import { Handle, Position } from '@xyflow/react';
-import type { ReactNode, ChangeEvent } from 'react';
+import type { ReactNode, ChangeEvent, MouseEvent } from 'react';
+import { useState } from 'react';
 import { useFlowStore } from '../store/useFlowStore';
 import { ExposureBadges } from '../components/ExposureBadges';
 import type { ExposureFlag } from '../store/types';
+import { Check, Trash2 } from 'lucide-react';
 
 type BaseNodeProps = {
   nodeId: string;
@@ -14,6 +16,7 @@ type BaseNodeProps = {
   selected?: boolean;
   exposure?: ExposureFlag[];
   showExposure?: boolean;
+  temporary?: boolean;
   children?: ReactNode;
 };
 
@@ -27,9 +30,14 @@ export function BaseNode({
   selected = false,
   exposure,
   showExposure = false,
+  temporary = false,
   children,
 }: BaseNodeProps) {
   const updateNodeData = useFlowStore((s) => s.updateNodeData);
+  const confirmNode = useFlowStore((s) => s.confirmNode);
+  const nodes = useFlowStore((s) => s.nodes);
+  const [showContextMenu, setShowContextMenu] = useState(false);
+  const [contextMenuPos, setContextMenuPos] = useState({ x: 0, y: 0 });
 
   const onLabelChange = (e: ChangeEvent<HTMLInputElement>) => {
     updateNodeData(nodeId, { label: e.target.value });
@@ -47,16 +55,55 @@ export function BaseNode({
     updateNodeData(nodeId, { exposure: next });
   };
 
+  const handleContextMenu = (e: MouseEvent) => {
+    if (!temporary) return;
+    e.preventDefault();
+    e.stopPropagation();
+    setContextMenuPos({ x: e.clientX, y: e.clientY });
+    setShowContextMenu(true);
+  };
+
+  const handleConfirm = () => {
+    confirmNode(nodeId);
+    setShowContextMenu(false);
+  };
+
+  const handleDelete = () => {
+    const nodeToDelete = nodes.find((n) => n.id === nodeId);
+    if (nodeToDelete) {
+      useFlowStore.getState().onNodesChange([{ type: 'remove', id: nodeId }]);
+    }
+    setShowContextMenu(false);
+  };
+
   const hasExposure = exposure && exposure.length > 0;
 
+  const borderClass = temporary
+    ? 'border-orange-500 border-dashed'
+    : selected
+    ? 'border-blue-500 ring-2 ring-blue-200'
+    : hasExposure
+    ? 'border-amber-400'
+    : 'border-gray-200';
+
   return (
-    <div className={`rounded-lg shadow-md border-2 bg-white min-w-[200px] max-w-[260px] text-left transition-shadow ${selected ? 'border-blue-500 ring-2 ring-blue-200' : hasExposure ? 'border-amber-400' : 'border-gray-200'}`}>
-      <Handle
-        type="target"
-        position={Position.Left}
-        className="!w-3 !h-3 !bg-gray-400 !border-2 !border-white"
-        style={{ top: 20 }}
-      />
+    <>
+      <div
+        className={`rounded-lg shadow-md border-2 bg-white min-w-[200px] max-w-[260px] text-left transition-shadow relative ${borderClass} ${temporary ? 'opacity-85' : ''}`}
+        onContextMenu={handleContextMenu}
+        onClick={() => setShowContextMenu(false)}
+      >
+        {temporary && (
+          <div className="absolute -top-2 -right-2 bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow z-10">
+            PENDING
+          </div>
+        )}
+        <Handle
+          type="target"
+          position={Position.Left}
+          className="!w-3 !h-3 !bg-gray-400 !border-2 !border-white"
+          style={{ top: 20 }}
+        />
 
       {/* Header with editable label */}
       <div
@@ -102,12 +149,46 @@ export function BaseNode({
         </div>
       )}
 
-      <Handle
-        type="source"
-        position={Position.Right}
-        className="!w-3 !h-3 !bg-blue-500 !border-2 !border-white"
-        style={{ top: 20 }}
-      />
-    </div>
+        <Handle
+          type="source"
+          position={Position.Right}
+          className="!w-3 !h-3 !bg-blue-500 !border-2 !border-white"
+          style={{ top: 20 }}
+        />
+      </div>
+
+      {/* Context menu for temporary nodes */}
+      {showContextMenu && temporary && (
+        <>
+          <div
+            className="fixed inset-0 z-40"
+            onClick={() => setShowContextMenu(false)}
+          />
+          <div
+            className="fixed z-50 bg-white rounded-lg shadow-xl border border-gray-200 py-1 min-w-[160px]"
+            style={{
+              left: `${contextMenuPos.x}px`,
+              top: `${contextMenuPos.y}px`,
+            }}
+          >
+            <button
+              onClick={handleConfirm}
+              className="w-full px-4 py-2 text-left text-sm hover:bg-green-50 text-gray-700 hover:text-green-700 flex items-center gap-2 transition-colors"
+            >
+              <Check size={14} />
+              Confirm Tag
+            </button>
+            <div className="h-px bg-gray-200 my-1" />
+            <button
+              onClick={handleDelete}
+              className="w-full px-4 py-2 text-left text-sm hover:bg-red-50 text-gray-700 hover:text-red-700 flex items-center gap-2 transition-colors"
+            >
+              <Trash2 size={14} />
+              Delete
+            </button>
+          </div>
+        </>
+      )}
+    </>
   );
 }

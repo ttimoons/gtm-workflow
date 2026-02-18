@@ -13,6 +13,7 @@ export function WebsiteNode({ id, data, selected }: NodeProps<WebsiteNodeType>) 
       icon={<Globe size={16} />}
       color="bg-emerald-600"
       selected={selected}
+      temporary={data.temporary}
     >
       {data.url && <p className="mb-0.5">{data.url}</p>}
       {data.dataLayerVariables && data.dataLayerVariables.length > 0 && (

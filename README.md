@@ -12,6 +12,7 @@ A visual node-based diagramming tool for planning Google Tag Manager implementat
 - **Drag-and-drop nodes** from the sidebar onto the canvas
 - **Connect components** by dragging between handles to visualize data flow
 - **Pre-built templates** for common GTM architectures (GA4, Server-Side CAPI, E-commerce, Hybrid)
+- **Domain scanner** — automatically detect tags on any website (including GTM-injected tags) and import them to canvas
 - **Auto-save** to localStorage with manual save/export/import
 - **JSON export/import** to share architectures with your team
 
@@ -32,6 +33,8 @@ A visual node-based diagramming tool for planning Google Tag Manager implementat
 
 ## Getting Started
 
+### Quick Start (Frontend Only)
+
 ```bash
 # Install dependencies
 npm install
@@ -45,6 +48,34 @@ npm run build
 # Preview production build
 npm run preview
 ```
+
+### With Domain Scanner (Frontend + Backend)
+
+The domain scanner requires a Python backend to scan websites using Playwright.
+
+```bash
+# 1. Install Python dependencies
+cd backend
+pip3 install -r requirements.txt
+python3 -m playwright install chromium
+cd ..
+
+# 2. Start both servers
+./start-dev.sh
+```
+
+Or start them manually in separate terminals:
+
+```bash
+# Terminal 1 - Backend
+cd backend
+python3 app.py
+
+# Terminal 2 - Frontend
+npm run dev
+```
+
+**Learn more:** See [SCANNER_INTEGRATION.md](./SCANNER_INTEGRATION.md) for detailed documentation.
 
 ## Tech Stack
 
@@ -126,12 +157,17 @@ git push -u origin main
 
 ```
 src/
-  components/     Canvas, Sidebar, Toolbar, TemplateModal, ProjectManager
+  components/     Canvas, Sidebar, Toolbar, TemplateModal, ProjectManager, DomainScannerModal
   nodes/          BaseNode + 7 custom node types
   edges/          Custom animated DataFlowEdge
   store/          Zustand store with React Flow integration
   data/           Tag registry (brand colors/icons) + template configs
   utils/          localStorage persistence + ID generation
+  types/          TypeScript type definitions
+backend/
+  app.py          Flask API server for domain scanning
+  audit_scripts.py Playwright-based script detection engine
+  vendor_map.py   50+ vendor pattern matching
 ```
 
 ## License

@@ -13,6 +13,7 @@ export function VariableNode({ id, data, selected }: NodeProps<VariableNodeType>
       icon={<Braces size={16} />}
       color="bg-purple-500"
       selected={selected}
+      temporary={data.temporary}
     >
       <p className="mb-0.5">Type: {data.variableType}</p>
       {data.variableName && <p className="text-gray-400">Name: {data.variableName}</p>}

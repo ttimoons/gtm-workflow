@@ -16,6 +16,11 @@ export type TagType =
   | 'floodlight'
   | 'hotjar'
   | 'clarity'
+  | 'amplitude'
+  | 'posthog'
+  | 'mixpanel'
+  | 'rudderstack'
+  | 'segment'
   | 'data-tag'
   | 'cmp';
 
@@ -30,6 +35,7 @@ export type WebsiteNodeData = {
   accountId?: string;
   url?: string;
   dataLayerVariables?: string[];
+  temporary?: boolean;
 };
 
 export type GtmLoadMethod = 'script' | '1st-party' | 'server-side' | 'gateway';
@@ -42,6 +48,7 @@ export type GtmContainerNodeData = {
   loadMethod?: GtmLoadMethod;
   customDomain?: string;
   exposure?: ExposureFlag[];
+  temporary?: boolean;
 };
 
 export type CmpMode = 'native' | 'gtm';
@@ -59,6 +66,7 @@ export type TagNodeData = {
   cmpMode?: CmpMode;
   exposure?: ExposureFlag[];
   notes?: string;
+  temporary?: boolean;
 };
 
 export type TriggerNodeData = {
@@ -66,6 +74,7 @@ export type TriggerNodeData = {
   accountId?: string;
   triggerType: 'pageview' | 'click' | 'custom-event' | 'form-submit' | 'scroll' | 'timer' | 'other';
   eventName?: string;
+  temporary?: boolean;
 };
 
 export type VariableNodeData = {
@@ -73,12 +82,14 @@ export type VariableNodeData = {
   accountId?: string;
   variableType: 'dataLayer' | 'javascript' | 'constant' | 'cookie' | 'url' | 'other';
   variableName?: string;
+  temporary?: boolean;
 };
 
 export type DataStreamNodeData = {
   label: string;
   accountId?: string;
   protocol?: 'HTTP' | 'Webhook' | 'API';
+  temporary?: boolean;
 };
 
 // --- Node union type for React Flow ---

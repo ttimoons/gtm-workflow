@@ -34,6 +34,7 @@ export function GtmClientNode({ id, data, selected }: NodeProps<GtmClientNodeTyp
       selected={selected}
       exposure={data.exposure}
       showExposure
+      temporary={data.temporary}
     >
       <div className="flex flex-col gap-1">
         <select
