@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Save,
   Download,
@@ -22,6 +22,7 @@ import {
 import { useFlowStore } from '../store/useFlowStore';
 import { useAuthStore } from '../store/useAuthStore';
 import { downloadProjectJson } from '../utils/storage';
+import { isBackendAvailable } from '../utils/backendCheck';
 import { TemplateModal } from './TemplateModal';
 import { ProjectManager } from './ProjectManager';
 import { DomainScannerModal } from './DomainScannerModal';
@@ -40,6 +41,12 @@ export function Toolbar() {
   const [showTemplates, setShowTemplates] = useState(false);
   const [showProjects, setShowProjects] = useState(false);
   const [showDomainScanner, setShowDomainScanner] = useState(false);
+  const [backendAvailable, setBackendAvailable] = useState<boolean | null>(null);
+
+  // Check backend availability on mount
+  useEffect(() => {
+    isBackendAvailable().then(setBackendAvailable);
+  }, []);
 
   const handleExport = () => {
     downloadProjectJson({ id: projectId, name: projectName, nodes, edges });
@@ -168,15 +175,17 @@ export function Toolbar() {
             </>
           )}
           <div className="w-px h-6 bg-gray-200" />
-          <button
-            onClick={() => setShowDomainScanner(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md
-                       hover:bg-gray-100 text-gray-600 transition-colors"
-            title="Scan website for tags"
-          >
-            <Globe size={14} />
-            <span className="hidden sm:inline">Scan Domain</span>
-          </button>
+          {backendAvailable && (
+            <button
+              onClick={() => setShowDomainScanner(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md
+                         hover:bg-gray-100 text-gray-600 transition-colors"
+              title="Scan website for tags"
+            >
+              <Globe size={14} />
+              <span className="hidden sm:inline">Scan Domain</span>
+            </button>
+          )}
           <button
             onClick={() => setShowTemplates(true)}
             className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md
