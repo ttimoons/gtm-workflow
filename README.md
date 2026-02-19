@@ -75,7 +75,7 @@ python3 app.py
 npm run dev
 ```
 
-**Learn more:** See [SCANNER_INTEGRATION.md](./SCANNER_INTEGRATION.md) for detailed documentation.
+The backend scanner requires Python 3.9+, Flask, and Playwright. It runs locally only and is not deployed to Netlify/Vercel.
 
 ## Tech Stack
 
