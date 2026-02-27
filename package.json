@@ -4,11 +4,15 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "predev": "node scripts/sync-projects.js",
     "dev": "vite",
+    "prebuild": "node scripts/sync-projects.js",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
+    "prepreview": "node scripts/sync-projects.js",
     "preview": "vite preview",
-    "sync-projects": "node scripts/sync-projects.js"
+    "sync-projects": "node scripts/sync-projects.js",
+    "postinstall": "node scripts/sync-projects.js"
   },
   "dependencies": {
     "@xyflow/react": "^12.10.0",
