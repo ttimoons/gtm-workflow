@@ -95,6 +95,7 @@ export type DataStreamNodeData = {
 export type ZoneNodeData = {
   label: string;
   color: string;
+  temporary?: boolean;
 };
 
 // --- Node union type for React Flow ---
