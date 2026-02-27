@@ -23,5 +23,13 @@ dist-ssr
 *.sln
 *.sw?
 
+# User project files (local to each machine, not shared via git)
+public/projects/*.json
+!public/projects/.gitkeep
+
+# Python
+__pycache__/
+*.pyc
+
 # Claude Code
 .claude/
