@@ -11,6 +11,8 @@ import { getAllTagTypes } from '../data/tagRegistry';
 export function Sidebar() {
   const tagTypes = getAllTagTypes();
 
+  const version = __APP_VERSION__;
+
   return (
     <aside className="w-64 border-r border-gray-200 bg-gray-50 p-4 overflow-y-auto flex flex-col gap-1 shrink-0">
       <h2 className="text-xs font-semibold uppercase text-gray-400 tracking-wider mb-1">
@@ -67,6 +69,10 @@ export function Sidebar() {
         color="bg-blue-500"
         data={{ color: '#3b82f6' }}
       />
+
+      <div className="mt-auto pt-4 border-t border-gray-200 text-center">
+        <span className="text-[10px] text-gray-400">GTM Workflow v{version}</span>
+      </div>
     </aside>
   );
 }
