@@ -33,6 +33,7 @@ const NODE_COLOR_MAP: Record<string, string> = {
   trigger: '#f59e0b',
   variable: '#a855f7',
   dataStream: '#06b6d4',
+  zone: '#3b82f6',
 };
 
 function FlowCanvas() {
@@ -99,12 +100,19 @@ function FlowCanvas() {
         })
       );
 
-      addNode({
+      const node: Record<string, unknown> = {
         id: generateId(),
         type: nodeType,
         position,
         data,
-      } as AppNode);
+      };
+
+      if (nodeType === 'zone') {
+        node.style = { width: 300, height: 200 };
+        node.zIndex = -1;
+      }
+
+      addNode(node as AppNode);
     },
     [screenToFlowPosition, addNode]
   );

@@ -3,6 +3,7 @@ import {
   Container,
   Server,
   ArrowRightLeft,
+  Square,
 } from 'lucide-react';
 import { SidebarItem } from './SidebarItem';
 import { getAllTagTypes } from '../data/tagRegistry';
@@ -56,6 +57,16 @@ export function Sidebar() {
         />
       ))}
 
+      <h2 className="text-xs font-semibold uppercase text-gray-400 tracking-wider mt-4 mb-1">
+        Annotation
+      </h2>
+      <SidebarItem
+        nodeType="zone"
+        label="Zone Box"
+        icon={<Square size={14} />}
+        color="bg-blue-500"
+        data={{ color: '#3b82f6' }}
+      />
     </aside>
   );
 }

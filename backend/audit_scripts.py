@@ -51,15 +51,19 @@ def is_filtered_url(url: str) -> bool:
 
 
 def build_script_record(
-    url: str, name: str, vendor: str, via_gtm: bool, script_type: str
+    url: str, name: str, vendor: str, via_gtm: bool, script_type: str,
+    content: str = "",
 ) -> dict:
-    return {
+    record: dict = {
         "url": url,
         "name": name,
         "vendor": vendor,
         "via_gtm": via_gtm,
         "type": script_type,
     }
+    if content:
+        record["content"] = content
+    return record
 
 
 def extract_inline_scripts(page: Page) -> list:
@@ -73,12 +77,15 @@ def extract_inline_scripts(page: Page) -> list:
         return []
 
     records = []
-    for content in contents:
+    for idx, content in enumerate(contents):
         content = content.strip()
         if not content:
             continue
         vendor = infer_vendor_from_inline(content)
-        records.append(build_script_record("inline", "inline", vendor, False, "inline"))
+        records.append(build_script_record(
+            f"inline#{idx}", "inline", vendor, False, "inline",
+            content=content,
+        ))
     return records
 
 
@@ -92,6 +99,11 @@ def get_dom_script_urls(page: Page) -> set:
         return set(u for u in urls if u)
     except Exception:
         return set()
+
+
+def _add_unique(lst: list, value: str):
+    if value not in lst:
+        lst.append(value)
 
 
 def extract_tracking_ids(scripts: list) -> dict:
@@ -116,73 +128,83 @@ def extract_tracking_ids(scripts: list) -> dict:
     for script in scripts:
         url = script["url"]
         vendor = script["vendor"]
+        # For inline scripts the useful text is in content, not url
+        text = script.get("content", "") if script["type"] == "inline" else url
 
-        # GTM Container IDs
-        gtm_match = re.search(r'GTM-[A-Z0-9]{6,8}', url)
-        if gtm_match and gtm_match.group() not in ids["gtm_containers"]:
-            ids["gtm_containers"].append(gtm_match.group())
+        # GTM Container IDs (from URL or inline content)
+        for gtm_match in re.finditer(r'GTM-[A-Z0-9]{4,8}', text):
+            _add_unique(ids["gtm_containers"], gtm_match.group())
+        for gtm_match in re.finditer(r'GTM-[A-Z0-9]{4,8}', url):
+            _add_unique(ids["gtm_containers"], gtm_match.group())
 
-        # GA4 Properties
-        ga4_match = re.search(r'(G-[A-Z0-9]{10}|GT-[A-Z0-9]{7,10})', url)
-        if ga4_match and ga4_match.group() not in ids["ga4_properties"]:
-            ids["ga4_properties"].append(ga4_match.group())
+        # GA4 Measurement IDs (G-XXXXXXXXXX only, not GT- which are Samsung models)
+        for ga4_match in re.finditer(r'G-[A-Z0-9]{10,12}', text):
+            _add_unique(ids["ga4_properties"], ga4_match.group())
+        for ga4_match in re.finditer(r'G-[A-Z0-9]{10,12}', url):
+            _add_unique(ids["ga4_properties"], ga4_match.group())
 
         # Google Ads
-        ads_match = re.search(r'AW-\d{9,11}', url)
-        if ads_match and ads_match.group() not in ids["google_ads"]:
-            ids["google_ads"].append(ads_match.group())
+        for ads_match in re.finditer(r'AW-\d{9,11}', text):
+            _add_unique(ids["google_ads"], ads_match.group())
+
+        # Meta Pixel
+        if "Facebook" in vendor or "Meta" in vendor:
+            for fb_match in re.finditer(r'fbq\s*\(\s*[\'"]init[\'"]\s*,\s*[\'"](\d+)', text):
+                _add_unique(ids["meta_pixels"], fb_match.group(1))
+
+        # TikTok
+        if "TikTok" in vendor:
+            for tt_match in re.finditer(r'ttq\.load\s*\(\s*[\'"]([A-Z0-9]+)', text):
+                _add_unique(ids["tiktok_pixels"], tt_match.group(1))
+
+        # LinkedIn
+        if "LinkedIn" in vendor:
+            for li_match in re.finditer(r'_linkedin_partner_id\s*=\s*[\'"](\d+)', text):
+                _add_unique(ids["linkedin_tags"], li_match.group(1))
+
+        # Twitter/X
+        if "Twitter" in vendor:
+            for tw_match in re.finditer(r'twq\s*\(\s*[\'"]init[\'"]\s*,\s*[\'"]([a-z0-9]+)', text):
+                _add_unique(ids["twitter_pixels"], tw_match.group(1))
 
         # Hotjar
         if "Hotjar" in vendor:
-            hj_match = re.search(r'hotjar[-.](com|net)/c/hotjar-(\d+)', url)
-            if hj_match and hj_match.group(2) not in ids["hotjar_ids"]:
-                ids["hotjar_ids"].append(hj_match.group(2))
+            for hj_match in re.finditer(r'hotjar[-.](com|net)/c/hotjar-(\d+)', url):
+                _add_unique(ids["hotjar_ids"], hj_match.group(2))
+            for hj_match in re.finditer(r'hj\s*\(\s*[\'"]init[\'"]\s*,\s*(\d+)', text):
+                _add_unique(ids["hotjar_ids"], hj_match.group(1))
 
         # Microsoft Clarity
         if "Clarity" in vendor:
-            clarity_match = re.search(r'clarity\.ms/tag/([a-z0-9]+)', url)
-            if clarity_match and clarity_match.group(1) not in ids["clarity_ids"]:
-                ids["clarity_ids"].append(clarity_match.group(1))
+            for cl_match in re.finditer(r'clarity\.ms/tag/([a-z0-9]+)', url):
+                _add_unique(ids["clarity_ids"], cl_match.group(1))
+            for cl_match in re.finditer(r'clarity\s*\(\s*[\'"]init[\'"]\s*,\s*[\'"]([a-z0-9]+)', text):
+                _add_unique(ids["clarity_ids"], cl_match.group(1))
 
-        # Meta Pixel (from inline scripts)
-        if script["type"] == "inline" and "Facebook Pixel" in vendor:
-            fb_match = re.search(r'fbq\s*\(\s*[\'"]init[\'"]\s*,\s*[\'"]\s*(\d+)', script["url"])
-            if fb_match and fb_match.group(1) not in ids["meta_pixels"]:
-                ids["meta_pixels"].append(fb_match.group(1))
-
-        # Amplitude (from URL or inline)
+        # Amplitude
         if "Amplitude" in vendor:
-            amp_match = re.search(r'amplitude\.com.*[?&]apiKey=([a-zA-Z0-9]+)', url)
-            if amp_match and amp_match.group(1) not in ids["amplitude_keys"]:
-                ids["amplitude_keys"].append(amp_match.group(1))
-            elif script["type"] == "inline":
-                amp_inline = re.search(r'amplitude\.getInstance.*[\'"]([a-zA-Z0-9]+)[\'"]', url)
-                if amp_inline and amp_inline.group(1) not in ids["amplitude_keys"]:
-                    ids["amplitude_keys"].append(amp_inline.group(1))
+            for amp_match in re.finditer(r'apiKey[\'"\s:=]+([a-f0-9]{32})', text):
+                _add_unique(ids["amplitude_keys"], amp_match.group(1))
 
-        # PostHog (from URL or inline)
+        # PostHog
         if "PostHog" in vendor:
-            ph_match = re.search(r'posthog\.init\s*\(\s*[\'"]([a-zA-Z0-9_-]+)[\'"]', url)
-            if ph_match and ph_match.group(1) not in ids["posthog_keys"]:
-                ids["posthog_keys"].append(ph_match.group(1))
+            for ph_match in re.finditer(r'posthog\.init\s*\(\s*[\'"]([a-zA-Z0-9_-]+)', text):
+                _add_unique(ids["posthog_keys"], ph_match.group(1))
 
-        # Mixpanel (from URL or inline)
+        # Mixpanel
         if "Mixpanel" in vendor:
-            mp_match = re.search(r'mixpanel\.init\s*\(\s*[\'"]([a-zA-Z0-9]+)[\'"]', url)
-            if mp_match and mp_match.group(1) not in ids["mixpanel_tokens"]:
-                ids["mixpanel_tokens"].append(mp_match.group(1))
+            for mp_match in re.finditer(r'mixpanel\.init\s*\(\s*[\'"]([a-f0-9]{32})', text):
+                _add_unique(ids["mixpanel_tokens"], mp_match.group(1))
 
-        # RudderStack (from inline)
-        if "RudderStack" in vendor and script["type"] == "inline":
-            rs_match = re.search(r'rudderanalytics\.load\s*\(\s*[\'"]([a-zA-Z0-9:]+)[\'"]', url)
-            if rs_match and rs_match.group(1) not in ids["rudderstack_keys"]:
-                ids["rudderstack_keys"].append(rs_match.group(1))
+        # RudderStack
+        if "RudderStack" in vendor:
+            for rs_match in re.finditer(r'rudderanalytics\.load\s*\(\s*[\'"]([a-zA-Z0-9:]+)', text):
+                _add_unique(ids["rudderstack_keys"], rs_match.group(1))
 
-        # Segment (from inline)
-        if "Segment" in vendor and script["type"] == "inline":
-            seg_match = re.search(r'analytics\.load\s*\(\s*[\'"]([a-zA-Z0-9]+)[\'"]', url)
-            if seg_match and seg_match.group(1) not in ids["segment_keys"]:
-                ids["segment_keys"].append(seg_match.group(1))
+        # Segment
+        if "Segment" in vendor:
+            for seg_match in re.finditer(r'analytics\.load\s*\(\s*[\'"]([a-zA-Z0-9]+)', text):
+                _add_unique(ids["segment_keys"], seg_match.group(1))
 
     return ids
 
@@ -288,14 +310,17 @@ def audit_url(url: str, browser: Browser, timeout_ms: int, log_callback=None) ->
     log("Extracting tracking IDs from scripts...")
     tracking_ids = extract_tracking_ids(deduped)
 
-    log(f"Scan complete! Found {len(deduped)} total scripts")
+    # Strip inline content before sending to frontend (can be very large)
+    cleaned = [{k: v for k, v in s.items() if k != "content"} for s in deduped]
+
+    log(f"Scan complete! Found {len(cleaned)} total scripts")
 
     return {
         "url": url,
         "scanned_at": _now_iso(),
         "gtm_detected": gtm_detected,
         "error": None,
-        "scripts": deduped,
+        "scripts": cleaned,
         "tracking_ids": tracking_ids,
     }
 

@@ -33,49 +33,65 @@ A visual node-based diagramming tool for planning Google Tag Manager implementat
 
 ## Getting Started
 
-### Quick Start (Frontend Only)
+### Prerequisites
+
+| Dependency | Version | Purpose |
+|------------|---------|---------|
+| **Node.js** | 18+ | Frontend dev server & build |
+| **npm** | 9+ | Package management (ships with Node) |
+| **Python** | 3.9+ | Backend API for domain scanner |
+| **pip** | — | Python package management (ships with Python) |
+
+### Full Setup (recommended)
 
 ```bash
-# Install dependencies
-npm install
+# Install everything: npm packages, Python packages, and Playwright Chromium
+./setup.sh
 
-# Start dev server
-npm run dev
-
-# Build for production
-npm run build
-
-# Preview production build
-npm run preview
+# Start both frontend + backend
+./start-dev.sh
 ```
 
-### With Domain Scanner (Frontend + Backend)
+### Frontend Only
 
-The domain scanner requires a Python backend to scan websites using Playwright.
+If you only need the canvas/diagramming tool (no domain scanner):
 
 ```bash
-# 1. Install Python dependencies
+npm install
+npm run dev
+```
+
+### Manual Setup
+
+```bash
+# 1. Frontend
+npm install
+
+# 2. Backend
 cd backend
 pip3 install -r requirements.txt
 python3 -m playwright install chromium
 cd ..
-
-# 2. Start both servers
-./start-dev.sh
 ```
 
-Or start them manually in separate terminals:
+Then start both servers in separate terminals:
 
 ```bash
-# Terminal 1 - Backend
-cd backend
-python3 app.py
+# Terminal 1 — Backend (Flask + Playwright)
+cd backend && python3 app.py
 
-# Terminal 2 - Frontend
+# Terminal 2 — Frontend (Vite)
 npm run dev
 ```
 
-The backend scanner requires Python 3.9+, Flask, and Playwright. It runs locally only and is not deployed to Netlify/Vercel.
+### Build for Production
+
+```bash
+npm run build    # outputs to dist/
+npm run preview  # preview production build locally
+```
+
+> **Note:** The backend (domain scanner) is a local-only tool. It uses headless Chromium and is not meant for static hosting (Netlify/Vercel). Deploy the frontend `dist/` folder only.
 
 ## Tech Stack
 

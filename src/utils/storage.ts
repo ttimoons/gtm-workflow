@@ -16,10 +16,6 @@ function toFilename(name: string): string {
 
 /* ── File-based save via dev-server API ────────────────────────── */
 
-/**
- * Save project as a JSON file in public/projects/.
- * Falls back to localStorage if the API is unavailable (production build).
- */
 export async function saveProject(project: Project): Promise<void> {
   const filename = toFilename(project.name);
   const json = JSON.stringify(project, null, 2);
@@ -56,9 +52,22 @@ export async function saveProject(project: Project): Promise<void> {
   localStorage.setItem(ACTIVE_KEY, project.id);
 }
 
-/* ── Load projects from public/projects/ ───────────────────────── */
+/* ── Load projects — live directory scan, manifest fallback ───── */
 
-export async function loadFileProjects(): Promise<Project[]> {
+type ProjectWithFilename = Project & { _filename?: string };
+
+async function loadFileProjectsLive(): Promise<ProjectWithFilename[]> {
+  try {
+    const res = await fetch(`/api/projects?t=${Date.now()}`);
+    if (!res.ok) return [];
+    const data: { projects: ProjectWithFilename[] } = await res.json();
+    return data.projects ?? [];
+  } catch {
+    return [];
+  }
+}
+
+async function loadFileProjectsFromManifest(): Promise<Project[]> {
   try {
     const res = await fetch(`/projects/manifest.json?t=${Date.now()}`);
     if (!res.ok) return [];
@@ -82,6 +91,13 @@ export async function loadFileProjects(): Promise<Project[]> {
   }
 }
 
+export async function loadFileProjects(): Promise<ProjectWithFilename[]> {
+  // Prefer live endpoint (dev server), fall back to manifest (static hosting)
+  const live = await loadFileProjectsLive();
+  if (live.length > 0) return live;
+  return loadFileProjectsFromManifest();
+}
+
 /* ── Load a single project by ID ───────────────────────────────── */
 
 export async function loadProject(id: string): Promise<Project | null> {
@@ -89,19 +105,19 @@ export async function loadProject(id: string): Promise<Project | null> {
   const fromFile = projects.find((p) => p.id === id);
   if (fromFile) return fromFile;
 
-  // Fallback: localStorage
   const local = getAllLocalProjects();
   return local.find((p) => p.id === id) ?? null;
 }
 
 /* ── Get all projects ──────────────────────────────────────────── */
 
-export async function getAllProjects(): Promise<Project[]> {
+export async function getAllProjects(): Promise<ProjectWithFilename[]> {
   const fileProjects = await loadFileProjects();
-  const localProjects = getAllLocalProjects();
-
   const fileIds = new Set(fileProjects.map((p) => p.id));
-  const localOnly = localProjects.filter((p) => !fileIds.has(p.id));
+
+  // Only include localStorage projects that don't exist as files
+  const localOnly = getAllLocalProjects()
+    .filter((p) => !fileIds.has(p.id));
 
   return [...fileProjects, ...localOnly];
 }
@@ -109,30 +125,43 @@ export async function getAllProjects(): Promise<Project[]> {
 /* ── Delete a project ──────────────────────────────────────────── */
 
 export async function deleteProject(id: string): Promise<void> {
-  // Try to delete the file via API
-  const filename = localStorage.getItem(`gtm-file-${id}`);
-  if (filename) {
+  const deletedFiles = new Set<string>();
+
+  // 1. Try by stored filename in localStorage
+  const storedFilename = localStorage.getItem(`gtm-file-${id}`);
+  if (storedFilename) {
     try {
-      await fetch(`/api/projects/${filename}`, { method: 'DELETE' });
-      localStorage.removeItem(`gtm-file-${id}`);
-    } catch {
-      // Ignore
-    }
+      await fetch(`/api/projects/${storedFilename}`, { method: 'DELETE' });
+      deletedFiles.add(storedFilename);
+    } catch { /* ignore */ }
+    localStorage.removeItem(`gtm-file-${id}`);
   }
 
-  // Also try to find by manifest and delete by matching id
+  // 2. Try by _filename from live endpoint (handles renames, missing localStorage)
   try {
     const projects = await loadFileProjects();
     const proj = projects.find((p) => p.id === id);
-    if (proj) {
-      const fn = toFilename(proj.name);
-      await fetch(`/api/projects/${fn}`, { method: 'DELETE' });
+    if (proj?._filename && !deletedFiles.has(proj._filename)) {
+      await fetch(`/api/projects/${proj._filename}`, { method: 'DELETE' });
+      deletedFiles.add(proj._filename);
     }
-  } catch {
-    // Ignore
+    // 3. Also try derived filename from project name
+    if (proj) {
+      const derived = toFilename(proj.name);
+      if (!deletedFiles.has(derived)) {
+        await fetch(`/api/projects/${derived}`, { method: 'DELETE' });
+      }
+    }
+  } catch { /* ignore */ }
+
+  // 4. Last resort: ask server to delete by project ID (scans all files)
+  if (deletedFiles.size === 0) {
+    try {
+      await fetch(`/api/projects/_byid_${encodeURIComponent(id)}.json`, { method: 'DELETE' });
+    } catch { /* ignore */ }
   }
 
-  // Also remove from localStorage fallback
+  // 5. Always clean up localStorage
   const localProjects = getAllLocalProjects().filter((p) => p.id !== id);
   localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(localProjects));
 }

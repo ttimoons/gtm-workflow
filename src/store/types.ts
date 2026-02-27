@@ -92,6 +92,11 @@ export type DataStreamNodeData = {
   temporary?: boolean;
 };
 
+export type ZoneNodeData = {
+  label: string;
+  color: string;
+};
+
 // --- Node union type for React Flow ---
 
 export type WebsiteNode = Node<WebsiteNodeData, 'website'>;
@@ -101,6 +106,7 @@ export type TagNode = Node<TagNodeData, 'tag'>;
 export type TriggerNode = Node<TriggerNodeData, 'trigger'>;
 export type VariableNode = Node<VariableNodeData, 'variable'>;
 export type DataStreamNode = Node<DataStreamNodeData, 'dataStream'>;
+export type ZoneNode = Node<ZoneNodeData, 'zone'>;
 
 export type AppNode =
   | WebsiteNode
@@ -109,7 +115,8 @@ export type AppNode =
   | TagNode
   | TriggerNode
   | VariableNode
-  | DataStreamNode;
+  | DataStreamNode
+  | ZoneNode;
 
 // --- Edge type ---
 

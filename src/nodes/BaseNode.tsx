@@ -1,6 +1,6 @@
-import { Handle, Position } from '@xyflow/react';
+import { Handle, Position, NodeResizer } from '@xyflow/react';
 import type { ReactNode, ChangeEvent, MouseEvent } from 'react';
-import { useState } from 'react';
+import { useState, useRef, useLayoutEffect, useCallback } from 'react';
 import { useFlowStore } from '../store/useFlowStore';
 import { ExposureBadges } from '../components/ExposureBadges';
 import type { ExposureFlag } from '../store/types';
@@ -38,6 +38,27 @@ export function BaseNode({
   const nodes = useFlowStore((s) => s.nodes);
   const [showContextMenu, setShowContextMenu] = useState(false);
   const [contextMenuPos, setContextMenuPos] = useState({ x: 0, y: 0 });
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [contentSize, setContentSize] = useState({ w: 200, h: 80 });
+
+  const measureContent = useCallback(() => {
+    const el = contentRef.current;
+    if (!el) return;
+    // Temporarily remove size constraints to measure natural content size
+    const prevWidth = el.style.width;
+    const prevHeight = el.style.height;
+    el.style.width = 'min-content';
+    el.style.height = 'auto';
+    const w = Math.ceil(el.scrollWidth) + 4; // +4 for border
+    const h = Math.ceil(el.scrollHeight) + 4;
+    el.style.width = prevWidth;
+    el.style.height = prevHeight;
+    setContentSize({ w: Math.max(200, w), h: Math.max(80, h) });
+  }, []);
+
+  useLayoutEffect(() => {
+    measureContent();
+  }, [label, accountId, children, showExposure, exposure, measureContent]);
 
   const onLabelChange = (e: ChangeEvent<HTMLInputElement>) => {
     updateNodeData(nodeId, { label: e.target.value });
@@ -89,10 +110,24 @@ export function BaseNode({
   return (
     <>
       <div
-        className={`rounded-lg shadow-md border-2 bg-white min-w-[200px] max-w-[260px] text-left transition-shadow relative ${borderClass} ${temporary ? 'opacity-85' : ''}`}
+        ref={contentRef}
+        className={`rounded-lg shadow-md border-2 bg-white min-w-[200px] min-h-[80px] w-full h-full text-left transition-shadow relative ${borderClass} ${temporary ? 'opacity-85' : ''}`}
         onContextMenu={handleContextMenu}
         onClick={() => setShowContextMenu(false)}
       >
+        <NodeResizer
+          isVisible={selected}
+          minWidth={contentSize.w}
+          minHeight={contentSize.h}
+          lineStyle={{ borderColor: 'transparent' }}
+          handleStyle={{
+            width: 8,
+            height: 8,
+            borderRadius: 2,
+            backgroundColor: '#3b82f6',
+            border: '2px solid white',
+          }}
+        />
         {temporary && (
           <div className="absolute -top-2 -right-2 bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow z-10">
             PENDING

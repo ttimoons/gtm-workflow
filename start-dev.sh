@@ -1,36 +1,56 @@
-#!/bin/bash
-# Start both frontend and backend dev servers for GTM Workflow
+#!/usr/bin/env bash
+set -euo pipefail
 
-# Colors for output
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
+RED='\033[0;31m'
+NC='\033[0m'
 
-PROJECT_DIR="/Users/ttimoon/Dev/gtm-workflow"
+PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
+BACKEND_PID=""
+
+cleanup() {
+  if [[ -n "$BACKEND_PID" ]]; then
+    echo -e "\n${YELLOW}Shutting down backend (PID $BACKEND_PID)...${NC}"
+    kill "$BACKEND_PID" 2>/dev/null || true
+    wait "$BACKEND_PID" 2>/dev/null || true
+  fi
+}
+trap cleanup EXIT INT TERM
 
 echo -e "${GREEN}Starting GTM Workflow Development Servers${NC}"
 echo "=========================================="
 
-# Check if node is in PATH, if not add nvm node
-if ! command -v node &> /dev/null; then
-    export PATH="$HOME/.nvm/versions/node/v24.13.1/bin:$PATH"
+# Preflight: check that dependencies are installed
+if [[ ! -d "$PROJECT_DIR/node_modules" ]]; then
+  echo -e "${RED}Frontend dependencies not installed. Run ./setup.sh first.${NC}"
+  exit 1
 fi
 
-# Start backend in background
-echo -e "${YELLOW}Starting backend server on port 5001...${NC}"
+if ! python3 -c "import flask" 2>/dev/null; then
+  echo -e "${YELLOW}Flask not found — starting frontend only (domain scanner disabled).${NC}"
+  echo -e "${YELLOW}Run ./setup.sh to install the full stack.${NC}"
+  echo ""
+  cd "$PROJECT_DIR"
+  exec npm run dev
+fi
+
+# Start backend
+echo -e "${YELLOW}Starting backend server on http://127.0.0.1:5001 ...${NC}"
 cd "$PROJECT_DIR/backend"
-python3 app.py > /tmp/gtm-backend.log 2>&1 &
+python3 app.py &
 BACKEND_PID=$!
-echo "Backend PID: $BACKEND_PID"
 
-# Wait a moment for backend to start
-sleep 2
+sleep 1
+if kill -0 "$BACKEND_PID" 2>/dev/null; then
+  echo -e "${GREEN}✓ Backend running (PID $BACKEND_PID)${NC}"
+else
+  echo -e "${RED}✗ Backend failed to start — check backend/app.py${NC}"
+  BACKEND_PID=""
+  exit 1
+fi
 
-# Start frontend
-echo -e "${YELLOW}Starting frontend server on port 5173...${NC}"
+# Start frontend (foreground — Ctrl-C stops everything via trap)
+echo -e "${YELLOW}Starting frontend server...${NC}"
 cd "$PROJECT_DIR"
 npm run dev
-
-# When frontend exits, cleanup backend
-echo -e "${YELLOW}Shutting down backend...${NC}"
-kill $BACKEND_PID 2>/dev/null

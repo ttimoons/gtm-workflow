@@ -6,6 +6,7 @@ import { TagNode } from './TagNode';
 import { TriggerNode } from './TriggerNode';
 import { VariableNode } from './VariableNode';
 import { DataStreamNode } from './DataStreamNode';
+import { ZoneNode } from './ZoneNode';
 
 // Defined at module level to prevent React Flow re-renders
 export const nodeTypes: NodeTypes = {
@@ -16,4 +17,5 @@ export const nodeTypes: NodeTypes = {
   trigger: TriggerNode,
   variable: VariableNode,
   dataStream: DataStreamNode,
+  zone: ZoneNode,
 };

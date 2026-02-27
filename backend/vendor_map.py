@@ -15,6 +15,18 @@ VENDOR_PATTERNS = [
     ("doubleclick.net",                         "Google Ads (DoubleClick)"),
     ("google.com/pagead",                       "Google Ads"),
 
+    # --- Google AdSense ---
+    ("googlesyndication.com/pagead/js/adsbygoogle", "Google AdSense"),
+    ("googlesyndication.com/pagead",            "Google AdSense"),
+    ("adtrafficquality.google",                 "Google Ad Traffic Quality"),
+
+    # --- Google Publisher Tags (GPT / Ad Manager) ---
+    ("/gpt.js",                                 "Google Publisher Tags"),
+    ("securepubads.g.doubleclick.net",          "Google Publisher Tags"),
+
+    # --- Google Maps ---
+    ("maps.googleapis.com",                     "Google Maps"),
+
     # --- Google Optimize ---
     ("google-analytics.com/cx/api.js",          "Google Optimize"),
 
@@ -129,6 +141,27 @@ VENDOR_PATTERNS = [
     ("consent.cookiebot.com",                   "Cookiebot (CMP)"),
     ("sdk.privacy-center.org",                  "Didomi (CMP)"),
 
+    # --- Cloudflare ---
+    ("static.cloudflareinsights.com",           "Cloudflare Web Analytics"),
+    ("cloudflare.com/beacon",                   "Cloudflare Web Analytics"),
+    ("challenges.cloudflare.com",               "Cloudflare Turnstile"),
+
+    # --- TrustIndex ---
+    ("cdn.trustindex.io",                       "TrustIndex"),
+
+    # --- Trustpilot ---
+    ("widget.trustpilot.com",                   "Trustpilot"),
+
+    # --- WP Rocket ---
+    ("wp-rocket/assets/js",                     "WP Rocket"),
+
+    # --- Matomo ---
+    ("matomo.js",                               "Matomo"),
+    ("piwik.js",                                "Matomo"),
+
+    # --- Plausible ---
+    ("plausible.io/js",                         "Plausible Analytics"),
+
     # --- CDN / Generic Libraries ---
     ("code.jquery.com",                         "jQuery (CDN)"),
     ("ajax.googleapis.com/ajax/libs",           "Google Hosted Libraries"),
@@ -162,7 +195,13 @@ _INLINE_FINGERPRINTS = [
     ("twq(",                    "Twitter/X Ads Pixel"),
     ("ttq.load(",               "TikTok Pixel"),
     ("pintrk(",                 "Pinterest Tag"),
-    ("dataLayer",               "Google Tag Manager"),
+    ("dataLayer.push",          "Google Tag Manager"),
+    ("googletag.cmd.push",      "Google Publisher Tags"),
+    ("googletag.defineSlot",    "Google Publisher Tags"),
+    ("CookieLaw",               "CookieLaw (CMP)"),
+    ("cookieconsent",           "Cookie Consent (CMP)"),
+    ("__cmp(",                  "CMP Framework"),
+    ("__tcfapi(",               "TCF Consent (CMP)"),
 ]
 
 
