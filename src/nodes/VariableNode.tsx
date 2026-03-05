@@ -16,7 +16,7 @@ export function VariableNode({ id, data, selected }: NodeProps<VariableNodeType>
       temporary={data.temporary}
     >
       <p className="mb-0.5">Type: {data.variableType}</p>
-      {data.variableName && <p className="text-gray-400">Name: {data.variableName}</p>}
+      {data.variableName && <p className="text-gray-400 dark:text-slate-400">Name: {data.variableName}</p>}
     </BaseNode>
   );
 }

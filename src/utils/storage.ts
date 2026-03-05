@@ -56,14 +56,14 @@ export async function saveProject(project: Project): Promise<void> {
 
 type ProjectWithFilename = Project & { _filename?: string };
 
-async function loadFileProjectsLive(): Promise<ProjectWithFilename[]> {
+async function loadFileProjectsLive(): Promise<ProjectWithFilename[] | null> {
   try {
     const res = await fetch(`/api/projects?t=${Date.now()}`);
-    if (!res.ok) return [];
+    if (!res.ok) return null;
     const data: { projects: ProjectWithFilename[] } = await res.json();
     return data.projects ?? [];
   } catch {
-    return [];
+    return null;
   }
 }
 
@@ -92,9 +92,9 @@ async function loadFileProjectsFromManifest(): Promise<Project[]> {
 }
 
 export async function loadFileProjects(): Promise<ProjectWithFilename[]> {
-  // Prefer live endpoint (dev server), fall back to manifest (static hosting)
+  // Prefer live endpoint (dev server), fall back to manifest only when API is unavailable.
   const live = await loadFileProjectsLive();
-  if (live.length > 0) return live;
+  if (live !== null) return live;
   return loadFileProjectsFromManifest();
 }
 

@@ -24,6 +24,15 @@ function takeSnapshot(state: FlowState): Snapshot {
   };
 }
 
+function projectSignature(state: Pick<FlowState, 'projectId' | 'projectName' | 'nodes' | 'edges'>): string {
+  return JSON.stringify({
+    id: state.projectId,
+    name: state.projectName,
+    nodes: state.nodes,
+    edges: state.edges,
+  });
+}
+
 // --- Store type ---
 
 type FlowState = {
@@ -286,6 +295,7 @@ export const useFlowStore = create<FlowState>()((set, get) => ({
   saveCurrentProject: () => {
     const { projectId, projectName, nodes, edges } = get();
     const now = new Date().toISOString();
+    lastSavedProjectSignature = projectSignature({ projectId, projectName, nodes, edges });
     saveProject({
       id: projectId,
       name: projectName,
@@ -299,37 +309,43 @@ export const useFlowStore = create<FlowState>()((set, get) => ({
   loadProjectById: async (id) => {
     const project = await loadProject(id);
     if (project) {
-      set({
+      const nextState = {
         projectId: project.id,
         projectName: project.name,
         nodes: project.nodes,
         edges: project.edges,
         past: [],
         future: [],
-      });
+      };
+      set(nextState);
+      lastSavedProjectSignature = projectSignature(nextState);
     }
   },
 
   loadFromTemplate: (nodes, edges, name) => {
-    set({
+    const nextState = {
       projectId: generateId(),
       projectName: name,
       nodes,
       edges,
       past: [],
       future: [],
-    });
+    };
+    set(nextState);
+    lastSavedProjectSignature = projectSignature(nextState);
   },
 
   newProject: () => {
-    set({
+    const nextState = {
       projectId: generateId(),
       projectName: 'Untitled Project',
       nodes: [],
       edges: [],
       past: [],
       future: [],
-    });
+    };
+    set(nextState);
+    lastSavedProjectSignature = projectSignature(nextState);
   },
 
   exportProject: () => {
@@ -343,14 +359,16 @@ export const useFlowStore = create<FlowState>()((set, get) => ({
 
   importProject: (json) => {
     const data = JSON.parse(json);
-    set({
+    const nextState = {
       projectId: data.id || generateId(),
       projectName: data.name || 'Imported Project',
       nodes: data.nodes || [],
       edges: data.edges || [],
       past: [],
       future: [],
-    });
+    };
+    set(nextState);
+    lastSavedProjectSignature = projectSignature(nextState);
   },
 
   loadLastProject: async () => {
@@ -363,12 +381,16 @@ export const useFlowStore = create<FlowState>()((set, get) => ({
 
 // Auto-save with debounce
 let saveTimeout: ReturnType<typeof setTimeout>;
+let lastSavedProjectSignature: string | null = null;
 useFlowStore.subscribe((state, prevState) => {
   if (
     state.nodes !== prevState.nodes ||
     state.edges !== prevState.edges ||
     state.projectName !== prevState.projectName
   ) {
+    const currentSignature = projectSignature(state);
+    if (currentSignature === lastSavedProjectSignature) return;
+
     clearTimeout(saveTimeout);
     saveTimeout = setTimeout(() => {
       useFlowStore.getState().saveCurrentProject();

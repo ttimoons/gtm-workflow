@@ -22,10 +22,10 @@ export function SidebarItem({ nodeType, label, icon, color, data }: SidebarItemP
       draggable
       onDragStart={onDragStart}
       className="flex items-center gap-2 px-3 py-2 rounded-md cursor-grab
-                 hover:bg-gray-100 active:cursor-grabbing transition-colors"
+                 hover:bg-gray-100 active:cursor-grabbing transition-colors dark:hover:bg-slate-700/80"
     >
       <div className={`${color} text-white p-1.5 rounded shrink-0`}>{icon}</div>
-      <span className="text-sm text-gray-700 truncate">{label}</span>
+      <span className="text-sm text-gray-700 truncate dark:text-slate-200">{label}</span>
     </div>
   );
 }

@@ -29,7 +29,7 @@ export function GtmServerNode({ id, data, selected }: NodeProps<GtmServerNodeTyp
         placeholder="Server URL (e.g. sgtm.example.com)"
         className="w-full text-xs text-gray-700 bg-gray-50 border border-gray-200
                    rounded px-2 py-1 outline-none focus:border-blue-400 focus:ring-1
-                   focus:ring-blue-200 placeholder-gray-400 font-mono"
+                   focus:ring-blue-200 placeholder-gray-400 font-mono dark:bg-slate-900 dark:border-slate-600 dark:text-slate-200 dark:placeholder-slate-500"
         spellCheck={false}
       />
     </BaseNode>

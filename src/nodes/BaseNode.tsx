@@ -105,13 +105,13 @@ export function BaseNode({
     ? 'border-blue-500 ring-2 ring-blue-200'
     : hasExposure
     ? 'border-amber-400'
-    : 'border-gray-200';
+    : 'border-gray-200 dark:border-slate-600';
 
   return (
     <>
       <div
         ref={contentRef}
-        className={`rounded-lg shadow-md border-2 bg-white min-w-[200px] min-h-[80px] w-full h-full text-left transition-shadow relative ${borderClass} ${temporary ? 'opacity-85' : ''}`}
+        className={`rounded-lg shadow-md border-2 bg-white min-w-[200px] min-h-[80px] w-full h-full text-left transition-shadow relative dark:bg-slate-800 ${borderClass} ${temporary ? 'opacity-85' : ''}`}
         onContextMenu={handleContextMenu}
         onClick={() => setShowContextMenu(false)}
       >
@@ -136,7 +136,7 @@ export function BaseNode({
         <Handle
           type="target"
           position={Position.Left}
-          className="!w-3 !h-3 !bg-gray-400 !border-2 !border-white"
+          className="!w-3 !h-3 !bg-gray-400 !border-2 !border-white dark:!bg-slate-500 dark:!border-slate-800"
           style={{ top: 20 }}
         />
 
@@ -156,26 +156,26 @@ export function BaseNode({
       </div>
 
       {/* ID field */}
-      <div className="px-3 py-1.5 border-b border-gray-100">
+      <div className="px-3 py-1.5 border-b border-gray-100 dark:border-slate-700">
         <input
           value={accountId ?? ''}
           onChange={onAccountIdChange}
           placeholder={idPlaceholder}
           className="w-full text-xs text-gray-700 bg-gray-50 border border-gray-200
                      rounded px-2 py-1 outline-none focus:border-blue-400 focus:ring-1
-                     focus:ring-blue-200 placeholder-gray-400 font-mono"
+                     focus:ring-blue-200 placeholder-gray-400 font-mono dark:bg-slate-900 dark:border-slate-600 dark:text-slate-200 dark:placeholder-slate-500"
           spellCheck={false}
         />
       </div>
 
       {/* Extra details */}
       {children && (
-        <div className="px-3 py-1.5 text-xs text-gray-600">{children}</div>
+        <div className="px-3 py-1.5 text-xs text-gray-600 dark:text-slate-300">{children}</div>
       )}
 
       {/* Exposure badges */}
       {showExposure && (
-        <div className="px-3 py-1.5 border-t border-gray-100">
+        <div className="px-3 py-1.5 border-t border-gray-100 dark:border-slate-700">
           <ExposureBadges
             nodeId={nodeId}
             exposure={exposure}
@@ -187,7 +187,7 @@ export function BaseNode({
         <Handle
           type="source"
           position={Position.Right}
-          className="!w-3 !h-3 !bg-blue-500 !border-2 !border-white"
+          className="!w-3 !h-3 !bg-blue-500 !border-2 !border-white dark:!border-slate-800"
           style={{ top: 20 }}
         />
       </div>
@@ -200,7 +200,7 @@ export function BaseNode({
             onClick={() => setShowContextMenu(false)}
           />
           <div
-            className="fixed z-50 bg-white rounded-lg shadow-xl border border-gray-200 py-1 min-w-[160px]"
+            className="fixed z-50 bg-white rounded-lg shadow-xl border border-gray-200 py-1 min-w-[160px] dark:bg-slate-800 dark:border-slate-700"
             style={{
               left: `${contextMenuPos.x}px`,
               top: `${contextMenuPos.y}px`,
@@ -208,15 +208,15 @@ export function BaseNode({
           >
             <button
               onClick={handleConfirm}
-              className="w-full px-4 py-2 text-left text-sm hover:bg-green-50 text-gray-700 hover:text-green-700 flex items-center gap-2 transition-colors"
+              className="w-full px-4 py-2 text-left text-sm hover:bg-green-50 text-gray-700 hover:text-green-700 flex items-center gap-2 transition-colors dark:text-slate-200 dark:hover:bg-green-500/10 dark:hover:text-green-300"
             >
               <Check size={14} />
               Confirm Tag
             </button>
-            <div className="h-px bg-gray-200 my-1" />
+            <div className="h-px bg-gray-200 my-1 dark:bg-slate-700" />
             <button
               onClick={handleDelete}
-              className="w-full px-4 py-2 text-left text-sm hover:bg-red-50 text-gray-700 hover:text-red-700 flex items-center gap-2 transition-colors"
+              className="w-full px-4 py-2 text-left text-sm hover:bg-red-50 text-gray-700 hover:text-red-700 flex items-center gap-2 transition-colors dark:text-slate-200 dark:hover:bg-red-500/10 dark:hover:text-red-300"
             >
               <Trash2 size={14} />
               Delete

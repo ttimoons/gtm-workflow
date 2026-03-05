@@ -16,7 +16,7 @@ export function TriggerNode({ id, data, selected }: NodeProps<TriggerNodeType>) 
       temporary={data.temporary}
     >
       <p className="mb-0.5">Type: {data.triggerType}</p>
-      {data.eventName && <p className="text-gray-400">Event: {data.eventName}</p>}
+      {data.eventName && <p className="text-gray-400 dark:text-slate-400">Event: {data.eventName}</p>}
     </BaseNode>
   );
 }

@@ -47,13 +47,17 @@ export function projectsApiPlugin(): Plugin {
         mkdirSync(projectsDir, { recursive: true });
       }
 
+      // Prevent full-page reloads when project files are saved via API.
+      // The app reads projects through this API directly in dev mode.
+      server.watcher.unwatch(projectsDir);
+      server.watcher.unwatch(join(projectsDir, '**', '*'));
+
       server.middlewares.use('/api/projects', (req, res, next) => {
         const filename = req.url?.replace(/^\//, '').split('?')[0] || '';
 
         // GET /api/projects — list all projects (live directory scan)
         if (req.method === 'GET' && !filename) {
           try {
-            regenerateManifest(projectsDir);
             const projects = readAllProjects(projectsDir);
             res.statusCode = 200;
             res.setHeader('Content-Type', 'application/json');

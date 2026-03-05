@@ -43,7 +43,7 @@ export function TagNode({ id, data, selected }: NodeProps<TagNodeType>) {
             onChange={onCmpModeChange}
             className="w-full text-xs text-gray-700 bg-gray-50 border border-gray-200
                        rounded px-2 py-1 outline-none focus:border-blue-400 focus:ring-1
-                       focus:ring-blue-200"
+                       focus:ring-blue-200 dark:bg-slate-900 dark:border-slate-600 dark:text-slate-200"
           >
             {CMP_MODES.map((m) => (
               <option key={m.value} value={m.value}>{m.label}</option>
@@ -61,13 +61,13 @@ export function TagNode({ id, data, selected }: NodeProps<TagNodeType>) {
               placeholder={field.placeholder}
               className="w-full text-xs text-gray-700 bg-gray-50 border border-gray-200
                          rounded px-2 py-1 outline-none focus:border-blue-400 focus:ring-1
-                         focus:ring-blue-200 placeholder-gray-400 font-mono"
+                         focus:ring-blue-200 placeholder-gray-400 font-mono dark:bg-slate-900 dark:border-slate-600 dark:text-slate-200 dark:placeholder-slate-500"
               spellCheck={false}
             />
           ))}
         </div>
       )}
-      {data.notes && <p className="text-gray-400">{data.notes}</p>}
+      {data.notes && <p className="text-gray-400 dark:text-slate-400">{data.notes}</p>}
     </BaseNode>
   );
 }
