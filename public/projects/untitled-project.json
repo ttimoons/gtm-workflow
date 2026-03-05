@@ -1,0 +1,139 @@
+{
+  "id": "1772182051551-1-b4o03",
+  "name": "Untitled Project",
+  "nodes": [
+    {
+      "id": "node_1772183768682_rb7bjx2a3",
+      "position": {
+        "x": 300,
+        "y": 200
+      },
+      "type": "tag",
+      "data": {
+        "label": "Cloudflare Analytics",
+        "tagType": "data-tag"
+      },
+      "measured": {
+        "width": 238,
+        "height": 156
+      }
+    },
+    {
+      "id": "node_1772183768683_yw0c8hzu0",
+      "position": {
+        "x": 580,
+        "y": 200
+      },
+      "type": "tag",
+      "data": {
+        "label": "CookieLaw (CMP)",
+        "tagType": "cmp"
+      },
+      "measured": {
+        "width": 238,
+        "height": 156
+      }
+    },
+    {
+      "id": "node_1772183768683_1qpyx9l15",
+      "position": {
+        "x": 860,
+        "y": 200
+      },
+      "type": "tag",
+      "data": {
+        "label": "Google Ad Quality",
+        "tagType": "custom-html"
+      },
+      "measured": {
+        "width": 238,
+        "height": 126
+      }
+    },
+    {
+      "id": "node_1772183768683_f9kvnmdwu",
+      "position": {
+        "x": 300,
+        "y": 480
+      },
+      "type": "tag",
+      "data": {
+        "label": "Google AdSense",
+        "tagType": "custom-html"
+      },
+      "measured": {
+        "width": 238,
+        "height": 126
+      }
+    },
+    {
+      "id": "node_1772183768683_q5cecxvuq",
+      "position": {
+        "x": 580,
+        "y": 480
+      },
+      "type": "tag",
+      "data": {
+        "label": "Google Maps",
+        "tagType": "custom-html"
+      },
+      "measured": {
+        "width": 238,
+        "height": 126
+      }
+    },
+    {
+      "id": "node_1772183768683_zklsbuxtx",
+      "position": {
+        "x": 860,
+        "y": 480
+      },
+      "type": "tag",
+      "data": {
+        "label": "Google Publisher Tags",
+        "tagType": "custom-html"
+      },
+      "measured": {
+        "width": 238,
+        "height": 126
+      }
+    },
+    {
+      "id": "node_1772183768683_alodx48kt",
+      "position": {
+        "x": 300,
+        "y": 760
+      },
+      "type": "tag",
+      "data": {
+        "label": "TrustIndex",
+        "tagType": "custom-html"
+      },
+      "measured": {
+        "width": 238,
+        "height": 126
+      },
+      "selected": true
+    },
+    {
+      "id": "1772183781070-2-afdjp",
+      "type": "tag",
+      "position": {
+        "x": 770,
+        "y": 750
+      },
+      "data": {
+        "label": "Custom HTM",
+        "tagType": "custom-html"
+      },
+      "measured": {
+        "width": 238,
+        "height": 126
+      },
+      "selected": false
+    }
+  ],
+  "edges": [],
+  "createdAt": "2026-02-27T09:17:24.787Z",
+  "updatedAt": "2026-02-27T09:17:24.787Z"
+}
