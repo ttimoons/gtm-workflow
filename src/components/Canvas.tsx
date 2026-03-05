@@ -15,6 +15,7 @@ import { edgeTypes } from '../edges';
 import { generateId } from '../utils/idGenerator';
 import { AlignmentGuides } from './AlignmentGuides';
 import type { AppNode } from '../store/types';
+import type { Theme } from '../utils/theme';
 
 const SNAP_GRID: [number, number] = [10, 10];
 
@@ -36,7 +37,11 @@ const NODE_COLOR_MAP: Record<string, string> = {
   zone: '#3b82f6',
 };
 
-function FlowCanvas() {
+type FlowCanvasProps = {
+  theme: Theme;
+};
+
+function FlowCanvas({ theme }: FlowCanvasProps) {
   const { nodes, edges, onNodesChange, onEdgesChange, onConnect, addNode } =
     useFlowStore();
   const undo = useFlowStore((s) => s.undo);
@@ -117,6 +122,8 @@ function FlowCanvas() {
     [screenToFlowPosition, addNode]
   );
 
+  const isDark = theme === 'dark';
+
   return (
     <ReactFlow
       nodes={nodes}
@@ -140,26 +147,31 @@ function FlowCanvas() {
       panOnDrag={[1, 2]}
       panOnScroll
       fitView
-      className="bg-gray-50"
+      colorMode={isDark ? 'dark' : 'light'}
+      className={isDark ? 'bg-slate-900' : 'bg-gray-50'}
       deleteKeyCode={['Backspace', 'Delete']}
       multiSelectionKeyCode="Shift"
     >
       <AlignmentGuides />
-      <Background gap={SNAP_GRID[0]} size={1} color="#e5e7eb" />
+      <Background gap={SNAP_GRID[0]} size={1} color={isDark ? '#334155' : '#e5e7eb'} />
       <Controls />
       <MiniMap
         nodeStrokeWidth={3}
         nodeColor={(n) => NODE_COLOR_MAP[n.type ?? ''] ?? '#6b7280'}
-        className="!bg-white !border-gray-200"
+        className={isDark ? '!bg-slate-900 !border-slate-700' : '!bg-white !border-gray-200'}
       />
     </ReactFlow>
   );
 }
 
-export function Canvas() {
+type CanvasProps = {
+  theme: Theme;
+};
+
+export function Canvas({ theme }: CanvasProps) {
   return (
     <ReactFlowProvider>
-      <FlowCanvas />
+      <FlowCanvas theme={theme} />
     </ReactFlowProvider>
   );
 }

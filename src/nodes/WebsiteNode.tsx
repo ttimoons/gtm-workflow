@@ -17,7 +17,7 @@ export function WebsiteNode({ id, data, selected }: NodeProps<WebsiteNodeType>) 
     >
       {data.url && <p className="mb-0.5">{data.url}</p>}
       {data.dataLayerVariables && data.dataLayerVariables.length > 0 && (
-        <p className="text-gray-400">DL: {data.dataLayerVariables.join(', ')}</p>
+        <p className="text-gray-400 dark:text-slate-400">DL: {data.dataLayerVariables.join(', ')}</p>
       )}
     </BaseNode>
   );

@@ -14,8 +14,8 @@ export function Sidebar() {
   const version = __APP_VERSION__;
 
   return (
-    <aside className="w-64 border-r border-gray-200 bg-gray-50 p-4 overflow-y-auto flex flex-col gap-1 shrink-0">
-      <h2 className="text-xs font-semibold uppercase text-gray-400 tracking-wider mb-1">
+    <aside className="w-64 border-r border-gray-200 bg-gray-50 p-4 overflow-y-auto flex flex-col gap-1 shrink-0 dark:border-slate-700 dark:bg-slate-800">
+      <h2 className="text-xs font-semibold uppercase text-gray-400 tracking-wider mb-1 dark:text-slate-400">
         Infrastructure
       </h2>
       <SidebarItem
@@ -45,7 +45,7 @@ export function Sidebar() {
         color="bg-cyan-500"
       />
 
-      <h2 className="text-xs font-semibold uppercase text-gray-400 tracking-wider mt-4 mb-1">
+      <h2 className="text-xs font-semibold uppercase text-gray-400 tracking-wider mt-4 mb-1 dark:text-slate-400">
         Tags
       </h2>
       {tagTypes.map(({ type, config }) => (
@@ -59,7 +59,7 @@ export function Sidebar() {
         />
       ))}
 
-      <h2 className="text-xs font-semibold uppercase text-gray-400 tracking-wider mt-4 mb-1">
+      <h2 className="text-xs font-semibold uppercase text-gray-400 tracking-wider mt-4 mb-1 dark:text-slate-400">
         Annotation
       </h2>
       <SidebarItem
@@ -70,8 +70,8 @@ export function Sidebar() {
         data={{ color: '#3b82f6' }}
       />
 
-      <div className="mt-auto pt-4 border-t border-gray-200 text-center">
-        <span className="text-[10px] text-gray-400">GTM Workflow v{version}</span>
+      <div className="mt-auto pt-4 border-t border-gray-200 text-center dark:border-slate-700">
+        <span className="text-[10px] text-gray-400 dark:text-slate-500">GTM Workflow v{version}</span>
       </div>
     </aside>
   );
