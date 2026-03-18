@@ -9,8 +9,8 @@ import { createServer } from 'http';
 import { readFileSync, writeFileSync, unlinkSync, readdirSync, existsSync, mkdirSync, statSync } from 'fs';
 import { join, extname } from 'path';
 
-const PORT = 3000;
-const STATIC_DIR = '/app/code';
+const PORT = process.env.PORT || 3000;
+const STATIC_DIR = new URL('./dist', import.meta.url).pathname;
 const DATA_DIR = '/app/data/projects';
 
 if (!existsSync(DATA_DIR)) mkdirSync(DATA_DIR, { recursive: true });
