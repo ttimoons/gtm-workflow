@@ -3,10 +3,8 @@ FROM node:20-alpine AS builder
 
 WORKDIR /build
 
-COPY package*.json ./
-RUN npm ci
-
 COPY . .
+RUN npm ci
 RUN npm run build
 
 # Stage 2: Runtime
