@@ -1,0 +1,12 @@
+{
+    "id": "io.antilop.gtmworflow",
+    "title": "GTM Workflow",
+    "version": "1.0.0",
+    "author": "Antilop Media",
+    "description": "Diagram visualisation Google Tag Architecture",
+    "httpPort": 3000,
+    "addons": {
+        "localstorage": {}
+    },
+    "manifestVersion": 2
+}

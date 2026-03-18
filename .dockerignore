@@ -1,0 +1,10 @@
+.git
+.gitignore
+.dockerignore
+node_modules
+screenshots
+test
+backend
+dist
+public/projects/*.json
+

@@ -1,0 +1,16 @@
+# Use the official Cloudron base image
+FROM cloudron/base:4.2.0
+
+# Set the working directory
+WORKDIR /
+
+# Copy your package files and install dependencies
+COPY package.json package-lock.json ./
+RUN npm install --production
+
+# Copy the rest of your app code
+COPY . .
+
+# Cloudron apps should run as the 'cloudron' user for security
+# Ensure the app listens on a specific port (e.g., 3000)
+CMD [ "node", "index.js" ]
