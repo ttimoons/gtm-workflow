@@ -1,10 +1,8 @@
 {
   "files": [
-    "antilop-media.json",
-    "basic-ga4-setup.json",
-    "hybrid-client-+-server.json",
-    "m-i-w-sst-stape-imported.json",
-    "server-side-with-facebook-capi.json",
-    "untitled-project.json"
+    "gtmWorkflow-antilop-media.json",
+    "gtmWorkflow-m-i-w-sst-stape-imported.json",
+    "gtmWorkflow-viteos---stape-migration.json",
+    "gtmWorkflow-viteos-stape-migration.json"
   ]
 }

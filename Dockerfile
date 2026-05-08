@@ -15,11 +15,18 @@ WORKDIR /app
 # Copy built static files
 COPY --from=builder /build/dist ./dist
 
-# Copy production server
-COPY server.js ./
-# Minimal package.json so Node treats server.js as ESM
-RUN echo '{"type":"module"}' > package.json
+# Copy production server + modules
+COPY server.js gdrive.js auth.js ./
+
+# Install runtime deps (googleapis only — server.js has no other npm imports)
+RUN echo '{"type":"module","dependencies":{"googleapis":"^144.0.0"}}' > package.json \
+ && npm install --omit=dev --no-audit --no-fund
 
 EXPOSE 3000
+
+# Project files are written here. Mount a persistent volume at /app/data
+# in your hosting platform (Easypanel, Cloudron, etc.) to survive container
+# recreation. Without a mount, Docker creates an anonymous volume.
+VOLUME ["/app/data"]
 
 CMD ["node", "server.js"]

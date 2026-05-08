@@ -13,10 +13,12 @@
     "prepreview": "node scripts/sync-projects.js",
     "preview": "vite preview",
     "sync-projects": "node scripts/sync-projects.js",
-    "postinstall": "node scripts/sync-projects.js"
+    "postinstall": "node scripts/sync-projects.js",
+    "start:prod": "npm run build && node --env-file=.env server.js"
   },
   "dependencies": {
     "@xyflow/react": "^12.10.0",
+    "googleapis": "^144.0.0",
     "html-to-image": "^1.11.13",
     "lucide-react": "^0.563.0",
     "react": "^19.2.0",

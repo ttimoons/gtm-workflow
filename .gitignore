@@ -33,3 +33,12 @@ __pycache__/
 
 # Claude Code
 .claude/
+
+# Secrets — never commit
+.env
+.env.*
+!.env.example
+client_secret_*.json
+
+# Local prod-test data (production uses /app/data on the container)
+data/

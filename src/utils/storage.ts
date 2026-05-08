@@ -5,13 +5,15 @@ const LOCAL_STORAGE_KEY = 'gtm-workflow-projects';
 
 /* ── Filename helper ──────────────────────────────────────────── */
 
+const FILENAME_PREFIX = 'gtmWorkflow-';
+
 function toFilename(name: string): string {
-  return (
+  const slug =
     name
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '') || 'untitled'
-  ) + '.json';
+      .replace(/^-+|-+$/g, '') || 'untitled';
+  return `${FILENAME_PREFIX}${slug}.json`;
 }
 
 /* ── File-based save via dev-server API ────────────────────────── */
