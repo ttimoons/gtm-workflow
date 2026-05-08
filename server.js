@@ -79,37 +79,50 @@ async function bootstrapDrive() {
     driveFolderId = await gdrive.ensureFolder();
     const localFiles = readdirSync(DATA_DIR)
       .filter(f => f.endsWith('.json') && f !== 'manifest.json');
+    const remote = await gdrive.listFiles(driveFolderId);
+    const remoteNames = new Set(remote.map(f => f.name));
+    const localNames = new Set(localFiles);
 
-    if (localFiles.length === 0) {
-      // Empty volume → restore everything from Drive
-      const remote = await gdrive.listFiles(driveFolderId);
-      console.log(`[gdrive] Local empty — restoring ${remote.length} files from Drive`);
-      for (const f of remote) {
+    // First-run seed: empty Drive + non-empty local → upload local to Drive.
+    // Otherwise Drive is authoritative on every startup.
+    if (remote.length === 0 && localFiles.length > 0) {
+      console.log(`[gdrive] First run — seeding ${localFiles.length} local files to Drive`);
+      for (const f of localFiles) {
         try {
-          const content = await gdrive.downloadFile(f.id);
-          writeFileSync(join(DATA_DIR, f.name), content);
+          await gdrive.uploadFile(f, readFileSync(join(DATA_DIR, f), 'utf-8'), driveFolderId);
         } catch (err) {
-          console.error(`[gdrive] restore ${f.name} failed:`, err.message || err);
+          console.error(`[gdrive] seed ${f} failed:`, err.message || err);
         }
       }
       regenerateManifest();
-    } else {
-      // Seed: upload any local file not yet in Drive
-      const remote = await gdrive.listFiles(driveFolderId);
-      const remoteNames = new Set(remote.map(f => f.name));
-      const toSeed = localFiles.filter(f => !remoteNames.has(f));
-      if (toSeed.length > 0) {
-        console.log(`[gdrive] Seeding ${toSeed.length} local files to Drive`);
-        for (const f of toSeed) {
-          try {
-            await gdrive.uploadFile(f, readFileSync(join(DATA_DIR, f), 'utf-8'), driveFolderId);
-          } catch (err) {
-            console.error(`[gdrive] seed ${f} failed:`, err.message || err);
-          }
-        }
-      } else {
-        console.log(`[gdrive] In sync (${remote.length} files in Drive)`);
+      return;
+    }
+
+    // Drive-authoritative reconciliation
+    const toRestore = remote.filter(f => !localNames.has(f.name));
+    const toRemove = localFiles.filter(f => !remoteNames.has(f));
+
+    for (const f of toRestore) {
+      try {
+        const content = await gdrive.downloadFile(f.id);
+        writeFileSync(join(DATA_DIR, f.name), content);
+      } catch (err) {
+        console.error(`[gdrive] restore ${f.name} failed:`, err.message || err);
       }
+    }
+    for (const f of toRemove) {
+      try {
+        unlinkSync(join(DATA_DIR, f));
+      } catch (err) {
+        console.error(`[gdrive] remove ${f} failed:`, err.message || err);
+      }
+    }
+
+    if (toRestore.length || toRemove.length) {
+      console.log(`[gdrive] Reconciled — restored ${toRestore.length}, removed ${toRemove.length} (Drive is source of truth)`);
+      regenerateManifest();
+    } else {
+      console.log(`[gdrive] In sync (${remote.length} files in Drive)`);
     }
   } catch (err) {
     console.error('[gdrive] bootstrap failed — backup disabled for this run:', err.message || err);
@@ -221,7 +234,7 @@ function handleStatic(req, res, pathname) {
   }
 }
 
-createServer(async (req, res) => {
+const server = createServer(async (req, res) => {
   const pathname = new URL(req.url, 'http://localhost').pathname;
 
   // Auth routes (login, callback, me, logout)
@@ -236,8 +249,10 @@ createServer(async (req, res) => {
   } else {
     handleStatic(req, res, pathname);
   }
-}).listen(PORT, async () => {
+});
+
+console.log(`[auth] ${isAuthEnabled() ? 'Google sign-in enabled' : 'Auth disabled (no AUTH_* env vars)'}`);
+await bootstrapDrive();
+server.listen(PORT, () => {
   console.log(`GTM Workflow running on port ${PORT}`);
-  console.log(`[auth] ${isAuthEnabled() ? 'Google sign-in enabled' : 'Auth disabled (no AUTH_* env vars)'}`);
-  await bootstrapDrive();
 });
