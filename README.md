@@ -104,11 +104,37 @@ npm run build    # TypeScript check + Vite build → dist/
 npm run preview  # Preview production build
 ```
 
-For production deployment, `server.js` serves both the static frontend and the API:
+The output `dist/` folder is fully static — deploy it anywhere.
 
-```bash
-node --env-file=.env server.js
-```
+## Deploy
+
+[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/ttimoons/gtm-workflow)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/ttimoons/gtm-workflow&env=VITE_GOOGLE_CLIENT_ID&envDescription=Google%20OAuth%20Client%20ID%20for%20Drive%20access&project-name=gtm-workflow)
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/ttimoons/gtm-workflow)
+
+### Environment Variable
+
+All platforms require one build-time env var:
+
+| Variable | Value |
+|----------|-------|
+| `VITE_GOOGLE_CLIENT_ID` | Your Google OAuth Client ID (e.g. `123456-abc.apps.googleusercontent.com`) |
+
+### Google Cloud Console Setup
+
+After deploying, add your production domain to your OAuth client:
+
+1. Go to [Google Cloud Console → Credentials](https://console.cloud.google.com/apis/credentials)
+2. Edit your OAuth 2.0 Client → **Authorized JavaScript origins**
+3. Add your deployed URL (e.g. `https://gtm-workflow.netlify.app`)
+
+### Platform-specific Notes
+
+| Platform | Build command | Publish directory |
+|----------|--------------|-------------------|
+| **Netlify** | `npm run build` | `dist` |
+| **Vercel** | `npm run build` | `dist` |
+| **GitHub Pages** | `npm run build` | `dist` (use `base: '/gtm-workflow/'` in vite.config.ts) |
 
 ## Tech Stack
 
@@ -118,16 +144,15 @@ node --env-file=.env server.js
 - [Tailwind CSS 4](https://tailwindcss.com) — styling
 - [Lucide React](https://lucide.dev) — icons
 - [Vite 7](https://vite.dev) — build tool & dev server
-- [googleapis](https://www.npmjs.com/package/googleapis) — Google Drive API client
+- [Google Identity Services](https://developers.google.com/identity/gsi/web) — client-side OAuth
+- [Google Drive REST API](https://developers.google.com/drive/api/v3/reference) — project persistence
 
 ## Architecture
 
 ```
-├── server.js              Auth + Drive API server (production & dev)
-├── auth.js                Google OAuth with HMAC-signed cookie sessions
-├── gdrive.js              Per-user Drive operations (list, upload, delete)
-├── vite.config.ts         Dev server with proxy to auth server
-├── .env.local             OAuth credentials (not committed)
+├── index.html             Entry point (loads GIS script)
+├── vite.config.ts         Build config
+├── .env.local             VITE_GOOGLE_CLIENT_ID (not committed)
 │
 ├── src/
 │   ├── App.tsx            Auth gate → loads last project
@@ -136,20 +161,26 @@ node --env-file=.env server.js
 │   ├── edges/             Animated DataFlowEdge with delete button
 │   ├── store/             Zustand (useFlowStore, useAuthStore)
 │   ├── data/              Tag registry (icons, colors) + templates
-│   └── utils/             storage.ts (Drive API), exportPng, idGenerator
+│   └── utils/
+│       ├── googleAuth.ts  GIS token client (sign-in, refresh, sign-out)
+│       ├── driveApi.ts    Direct Drive API (list, upload, delete)
+│       ├── storage.ts     Project persistence layer (uses driveApi)
+│       └── exportPng.ts   Canvas-to-PNG export
 │
+├── server.js              Optional self-hosted server (auth + Drive proxy)
+├── auth.js                Server-side OAuth (alternative to client-side)
+├── gdrive.js              Server-side Drive ops (alternative to client-side)
 ├── backend/               Flask domain scanner (optional, local-only)
-├── plugins/               Vite dev middleware (local project files, offline mode)
-└── scripts/               Build-time utilities
+└── plugins/               Vite dev middleware (offline/local mode)
 ```
 
 ### How Storage Works
 
-- Each user signs in with Google OAuth (scopes: `openid`, `email`, `profile`, `drive.file`)
-- Session is stored as an HMAC-signed cookie (no database required)
-- Projects are saved as individual JSON files in the user's `gtm-workflow-backups` Google Drive folder
-- The folder is auto-created on first save
-- No localStorage fallback — Drive is the single source of truth
+- User signs in via Google popup (GIS token model) — no server redirect needed
+- Access token stored in `sessionStorage` (cleared on tab close)
+- Projects saved as individual JSON files in user's `gtm-workflow-backups` Drive folder
+- Folder is auto-created on first save
+- Token auto-refreshes silently; re-prompts user if consent expired
 
 ## License
 
