@@ -10,7 +10,7 @@
  *
  * Env vars:
  *   AUTH_SECRET                — required, ≥32 bytes random hex
- *   AUTH_GOOGLE_CLIENT_ID      — OAuth client ID (can be the same as GDRIVE_CLIENT_ID)
+ *   AUTH_GOOGLE_CLIENT_ID      — OAuth client ID
  *   AUTH_GOOGLE_CLIENT_SECRET  — OAuth client secret
  *   AUTH_REDIRECT_URI          — full callback URL, e.g. https://app.example.com/api/auth/google/callback
  *

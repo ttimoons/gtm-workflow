@@ -48,20 +48,36 @@ A visual node-based diagramming tool for planning Google Tag Manager implementat
 
 1. Go to [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
 2. Create an OAuth 2.0 Client ID (Web application)
-3. Add authorized redirect URI: `http://localhost:5174/api/auth/google/callback`
+3. Add authorized JavaScript origin: `http://localhost:5173`
 4. Enable the **Google Drive API** for the project
-5. Copy your Client ID and Secret into `.env.local`:
+5. Copy your Client ID into `.env.local`:
 
 ```env
-# OAuth credentials
+VITE_GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
+```
+
+> **Note:** Authentication uses client-side [Google Identity Services](https://developers.google.com/identity/gsi/web) (GIS). The browser gets an access token directly from Google — no server-side secret or redirect URI needed for development or static deployments.
+
+### Development
+
+```bash
+npm install
+
+# Vite frontend (the only server you need)
+npm run dev
+```
+
+The app will be available at `http://localhost:5173`. Sign in with Google to start creating and saving projects.
+
+### Self-hosted Production Server (optional)
+
+For Docker / Cloudron / Easypanel deployments, the server-side auth proxy handles OAuth via redirect:
+
+```env
+AUTH_SECRET=random-hex-string-at-least-32-bytes
 AUTH_GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
 AUTH_GOOGLE_CLIENT_SECRET=GOCSPX-your-secret
-AUTH_SECRET=random-hex-string-at-least-32-bytes
-AUTH_REDIRECT_URI=http://localhost:5174/api/auth/google/callback
-
-# Server
-PORT=3001
-AUTH_PORT=3001
+AUTH_REDIRECT_URI=https://your-app.example.com/api/auth/google/callback
 ```
 
 Generate a secure `AUTH_SECRET`:
@@ -70,19 +86,10 @@ Generate a secure `AUTH_SECRET`:
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
-### Development
-
 ```bash
-npm install
-
-# Terminal 1 — Auth + Drive API server
-npm run dev:server
-
-# Terminal 2 — Vite frontend (proxies /api to server)
-npm run dev -- --port 5174
+npm run build
+node --env-file=.env server.js
 ```
-
-The app will be available at `http://localhost:5174`. Sign in with Google to start creating and saving projects.
 
 ### Domain Scanner (optional)
 
@@ -167,9 +174,9 @@ After deploying, add your production domain to your OAuth client:
 │       ├── storage.ts     Project persistence layer (uses driveApi)
 │       └── exportPng.ts   Canvas-to-PNG export
 │
-├── server.js              Optional self-hosted server (auth + Drive proxy)
-├── auth.js                Server-side OAuth (alternative to client-side)
-├── gdrive.js              Server-side Drive ops (alternative to client-side)
+├── server.js              Self-hosted production server (auth + Drive proxy)
+├── auth.js                Server-side OAuth (for Docker/Cloudron/Easypanel)
+├── gdrive.js              Server-side Drive ops (per-user tokens from session)
 ├── backend/               Flask domain scanner (optional, local-only)
 └── plugins/               Vite dev middleware (offline/local mode)
 ```

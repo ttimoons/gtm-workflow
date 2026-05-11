@@ -24,9 +24,8 @@ RUN echo '{"type":"module","dependencies":{"googleapis":"^144.0.0"}}' > package.
 
 EXPOSE 3000
 
-# Project files are written here. Mount a persistent volume at /app/data
-# in your hosting platform (Easypanel, Cloudron, etc.) to survive container
-# recreation. Without a mount, Docker creates an anonymous volume.
-VOLUME ["/app/data"]
+# Required env vars at runtime: AUTH_SECRET, AUTH_GOOGLE_CLIENT_ID,
+# AUTH_GOOGLE_CLIENT_SECRET, AUTH_REDIRECT_URI, VITE_GOOGLE_CLIENT_ID
+# (set these in your hosting platform's env config)
 
 CMD ["node", "server.js"]

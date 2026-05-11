@@ -5,10 +5,9 @@
   "type": "module",
   "scripts": {
     "predev": "node scripts/sync-projects.js",
-    "dev": "vite --host 0.0.0.0 --port 5173",
-    "dev:server": "node --env-file=.env.local server.js",
-    "gdrive-auth": "node --env-file=.env.local scripts/gdrive-auth.js",
-    "start": "vite --host 0.0.0.0 --port 5173",
+    "dev": "vite",
+    "dev:server": "node --env-file=.env server.js",
+    "start": "vite",
     "prebuild": "node scripts/sync-projects.js",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
