@@ -41,9 +41,7 @@ export const useAuthStore = create<AuthState>()((set) => ({
         set({ isAuthenticated: false, user: null, isLoading: false });
       }
     } catch {
-      // /api/auth/me not available (e.g. dev server without auth) — treat as authenticated
-      // so the app is usable in dev.
-      set({ isAuthenticated: true, user: null, isLoading: false });
+      set({ isAuthenticated: false, user: null, isLoading: false });
     }
   },
 

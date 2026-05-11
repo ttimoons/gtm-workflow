@@ -1,8 +1,8 @@
 {
   "files": [
-    "gtmWorkflow-antilop-media.json",
-    "gtmWorkflow-m-i-w-sst-stape-imported.json",
-    "gtmWorkflow-viteos---stape-migration.json",
-    "gtmWorkflow-viteos-stape-migration.json"
+    "gtmWorkflow-hybrid-client-server-local.json",
+    "gtmWorkflow-multi-platform-e-commerce.json",
+    "gtmWorkflow-server-side-with-facebook-capi-local.json",
+    "gtmWorkflow-viteos-stape-migration-backup.json"
   ]
 }

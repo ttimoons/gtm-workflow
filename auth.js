@@ -163,9 +163,9 @@ export async function handleAuthRoutes(req, res, pathname) {
     setStateCookie(res, state, secure);
     const oauth = makeOauthClient();
     const url = oauth.generateAuthUrl({
-      access_type: 'online',
-      prompt: 'select_account',
-      scope: ['openid', 'email', 'profile'],
+      access_type: 'offline',
+      prompt: 'consent',
+      scope: ['openid', 'email', 'profile', 'https://www.googleapis.com/auth/drive.file'],
       state,
     });
     res.statusCode = 302;
@@ -203,6 +203,8 @@ export async function handleAuthRoutes(req, res, pathname) {
         email: payload.email,
         name: payload.name,
         picture: payload.picture,
+        access_token: tokens.access_token,
+        refresh_token: tokens.refresh_token,
         exp: Math.floor(Date.now() / 1000) + COOKIE_MAX_AGE,
       };
       setSessionCookie(res, sign(session), secure);

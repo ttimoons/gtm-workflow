@@ -39,6 +39,8 @@ function readAllProjects(dir: string): unknown[] {
 
 export function projectsApiPlugin(): Plugin {
   const projectsDir = resolve(process.cwd(), 'public', 'projects');
+  // When an auth server is configured, yield all /api/projects requests to the Vite proxy.
+  const useAuthServer = !!process.env.AUTH_PORT;
 
   return {
     name: 'projects-api',
@@ -53,6 +55,8 @@ export function projectsApiPlugin(): Plugin {
       server.watcher.unwatch(join(projectsDir, '**', '*'));
 
       server.middlewares.use('/api/projects', (req, res, next) => {
+        if (useAuthServer) return next(); // let proxy handle it
+
         const filename = req.url?.replace(/^\//, '').split('?')[0] || '';
 
         // GET /api/projects — list all projects (live directory scan)

@@ -1,25 +1,19 @@
 /**
  * Production server for Cloudron / Easypanel deployment.
  * - Serves built static files from ./dist
- * - Implements /api/projects CRUD API (same contract as the Vite dev plugin)
- * - Stores project JSON files in /app/data/projects (mount as persistent volume)
- * - Optional Google Drive backup (auto-restore on empty volume, mirror on save)
- * - Optional Google sign-in gating /api/projects access
+ * - Implements /api/projects CRUD API backed by the signed-in user's Google Drive
+ * - Each user's projects live in their own gtm-workflow-backups Drive folder
+ * - Google sign-in required (AUTH_* env vars)
  */
 
 import { createServer } from 'http';
-import { readFileSync, writeFileSync, unlinkSync, readdirSync, existsSync, mkdirSync, statSync } from 'fs';
+import { readFileSync, existsSync, statSync } from 'fs';
 import { join, extname } from 'path';
-import * as gdrive from './gdrive.js';
+import { createUserDriveOps } from './gdrive.js';
 import { handleAuthRoutes, getSession, isAuthEnabled } from './auth.js';
 
 const PORT = process.env.PORT || 3000;
 const STATIC_DIR = new URL('./dist', import.meta.url).pathname;
-// Default to /app/data/projects (Cloudron / Easypanel volume mount).
-// Override via DATA_DIR env var when running locally outside Docker.
-const DATA_DIR = process.env.DATA_DIR || '/app/data/projects';
-
-if (!existsSync(DATA_DIR)) mkdirSync(DATA_DIR, { recursive: true });
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -36,123 +30,57 @@ const MIME = {
   '.eot':  'application/vnd.ms-fontobject',
 };
 
-function regenerateManifest() {
-  const files = readdirSync(DATA_DIR)
-    .filter(f => f.endsWith('.json') && f !== 'manifest.json')
-    .sort();
-  writeFileSync(join(DATA_DIR, 'manifest.json'), JSON.stringify({ files }, null, 2) + '\n');
-}
-
-function readAllProjects() {
-  const files = readdirSync(DATA_DIR)
-    .filter(f => f.endsWith('.json') && f !== 'manifest.json')
-    .sort();
-  return files.map(file => {
-    try {
-      return { ...JSON.parse(readFileSync(join(DATA_DIR, file), 'utf-8')), _filename: file };
-    } catch { return null; }
-  }).filter(Boolean);
-}
-
-/* ── Drive sync helpers (fire-and-forget; failures only logged) ─ */
-
-let driveFolderId = null;
-
-function mirrorPut(filename, content) {
-  if (!gdrive.isEnabled() || !driveFolderId) return;
-  gdrive.uploadFile(filename, content, driveFolderId)
-    .catch(err => console.error(`[gdrive] upload ${filename} failed:`, err.message || err));
-}
-
-function mirrorDelete(filename) {
-  if (!gdrive.isEnabled() || !driveFolderId) return;
-  gdrive.deleteFile(filename, driveFolderId)
-    .catch(err => console.error(`[gdrive] delete ${filename} failed:`, err.message || err));
-}
-
-async function bootstrapDrive() {
-  if (!gdrive.isEnabled()) {
-    console.log('[gdrive] Backup disabled (env vars not set)');
-    return;
-  }
-  try {
-    driveFolderId = await gdrive.ensureFolder();
-    const localFiles = readdirSync(DATA_DIR)
-      .filter(f => f.endsWith('.json') && f !== 'manifest.json');
-    const remote = await gdrive.listFiles(driveFolderId);
-    const remoteNames = new Set(remote.map(f => f.name));
-    const localNames = new Set(localFiles);
-
-    // First-run seed: empty Drive + non-empty local → upload local to Drive.
-    // Otherwise Drive is authoritative on every startup.
-    if (remote.length === 0 && localFiles.length > 0) {
-      console.log(`[gdrive] First run — seeding ${localFiles.length} local files to Drive`);
-      for (const f of localFiles) {
-        try {
-          await gdrive.uploadFile(f, readFileSync(join(DATA_DIR, f), 'utf-8'), driveFolderId);
-        } catch (err) {
-          console.error(`[gdrive] seed ${f} failed:`, err.message || err);
-        }
-      }
-      regenerateManifest();
-      return;
-    }
-
-    // Drive-authoritative reconciliation
-    const toRestore = remote.filter(f => !localNames.has(f.name));
-    const toRemove = localFiles.filter(f => !remoteNames.has(f));
-
-    for (const f of toRestore) {
-      try {
-        const content = await gdrive.downloadFile(f.id);
-        writeFileSync(join(DATA_DIR, f.name), content);
-      } catch (err) {
-        console.error(`[gdrive] restore ${f.name} failed:`, err.message || err);
-      }
-    }
-    for (const f of toRemove) {
-      try {
-        unlinkSync(join(DATA_DIR, f));
-      } catch (err) {
-        console.error(`[gdrive] remove ${f} failed:`, err.message || err);
-      }
-    }
-
-    if (toRestore.length || toRemove.length) {
-      console.log(`[gdrive] Reconciled — restored ${toRestore.length}, removed ${toRemove.length} (Drive is source of truth)`);
-      regenerateManifest();
-    } else {
-      console.log(`[gdrive] In sync (${remote.length} files in Drive)`);
-    }
-  } catch (err) {
-    console.error('[gdrive] bootstrap failed — backup disabled for this run:', err.message || err);
-    driveFolderId = null;
-  }
-}
-
 /* ── Auth gating ─────────────────────────────────────────────── */
 
-function requireAuth(req, res) {
-  if (!isAuthEnabled()) return true; // auth disabled — allow all
+function getAuthSession(req, res) {
+  if (!isAuthEnabled()) return { noDrive: true };
   const session = getSession(req);
   if (!session) {
     res.statusCode = 401;
     res.setHeader('Content-Type', 'application/json');
     res.end(JSON.stringify({ error: 'Unauthorized' }));
-    return false;
+    return null;
   }
-  return true;
+  return session;
 }
 
-/* ── Project API ─────────────────────────────────────────────── */
+function getUserDriveOps(session) {
+  if (session?.access_token) {
+    return createUserDriveOps(session.access_token, session.refresh_token, session.sub);
+  }
+  return null;
+}
+
+/* ── Project API (Drive-only) ────────────────────────────────── */
 
 function handleApi(req, res, filename) {
-  if (!requireAuth(req, res)) return;
   res.setHeader('Content-Type', 'application/json');
 
-  // GET /api/projects — list all
+  const session = getAuthSession(req, res);
+  if (session === null) return; // already sent 401
+
+  const userDrive = getUserDriveOps(session);
+
+  if (!userDrive) {
+    // Session exists but no Drive tokens — user signed in before Drive scope was added
+    res.statusCode = 401;
+    res.end(JSON.stringify({ error: 'Drive not authorized — please sign out and sign in again.' }));
+    return;
+  }
+
+  // GET /api/projects — list all from Drive
   if (req.method === 'GET' && !filename) {
-    res.end(JSON.stringify({ projects: readAllProjects() }));
+    console.log(`[drive] listProjects for ${session.email}`);
+    userDrive.listProjects()
+      .then(projects => {
+        console.log(`[drive] listed ${projects.length} projects for ${session.email}`);
+        res.end(JSON.stringify({ projects }));
+      })
+      .catch(err => {
+        console.error('[drive] listProjects failed:', err.message);
+        res.statusCode = 500;
+        res.end(JSON.stringify({ error: err.message }));
+      });
     return;
   }
 
@@ -162,56 +90,46 @@ function handleApi(req, res, filename) {
     return;
   }
 
-  const filePath = join(DATA_DIR, filename);
-
-  // PUT — save project
+  // PUT — save project to Drive
   if (req.method === 'PUT') {
     let body = '';
     req.on('data', chunk => { body += chunk; });
     req.on('end', () => {
       try {
         JSON.parse(body); // validate JSON
-        writeFileSync(filePath, body);
-        regenerateManifest();
-        mirrorPut(filename, body);
-        res.end(JSON.stringify({ ok: true, filename }));
+        console.log(`[drive] upload ${filename} for ${session.email}`);
+        userDrive.uploadProject(filename, body)
+          .then(() => {
+            console.log(`[drive] uploaded ${filename} ok`);
+            res.end(JSON.stringify({ ok: true, filename }));
+          })
+          .catch(err => {
+            console.error(`[drive] upload ${filename} failed:`, err.message);
+            res.statusCode = 500;
+            res.end(JSON.stringify({ error: err.message }));
+          });
       } catch (err) {
-        res.statusCode = 500;
-        res.end(JSON.stringify({ error: String(err) }));
+        res.statusCode = 400;
+        res.end(JSON.stringify({ error: 'Invalid JSON' }));
       }
     });
     return;
   }
 
-  // DELETE — remove project
+  // DELETE — remove project from Drive
   if (req.method === 'DELETE') {
-    try {
-      if (existsSync(filePath)) {
-        unlinkSync(filePath);
-        mirrorDelete(filename);
-      }
-      // Handle _byid_ pattern (delete by project ID when filename is unknown)
-      const idMatch = filename.match(/^_byid_(.+)\.json$/);
-      if (idMatch) {
-        const targetId = decodeURIComponent(idMatch[1]);
-        readdirSync(DATA_DIR)
-          .filter(f => f.endsWith('.json') && f !== 'manifest.json')
-          .forEach(f => {
-            try {
-              const proj = JSON.parse(readFileSync(join(DATA_DIR, f), 'utf-8'));
-              if (proj.id === targetId) {
-                unlinkSync(join(DATA_DIR, f));
-                mirrorDelete(f);
-              }
-            } catch { /* skip corrupted */ }
-          });
-      }
-      regenerateManifest();
-      res.end(JSON.stringify({ ok: true }));
-    } catch (err) {
-      res.statusCode = 500;
-      res.end(JSON.stringify({ error: String(err) }));
-    }
+    const idMatch = filename.match(/^_byid_(.+)\.json$/);
+    const deleteOp = idMatch
+      ? userDrive.deleteProjectById(decodeURIComponent(idMatch[1]))
+      : userDrive.deleteProject(filename);
+
+    deleteOp
+      .then(() => res.end(JSON.stringify({ ok: true })))
+      .catch(err => {
+        console.error(`[drive] delete ${filename} failed:`, err.message);
+        res.statusCode = 500;
+        res.end(JSON.stringify({ error: err.message }));
+      });
     return;
   }
 
@@ -251,8 +169,9 @@ const server = createServer(async (req, res) => {
   }
 });
 
+/* ── Startup ──────────────────────────────────────────────────── */
+
 console.log(`[auth] ${isAuthEnabled() ? 'Google sign-in enabled' : 'Auth disabled (no AUTH_* env vars)'}`);
-await bootstrapDrive();
 server.listen(PORT, () => {
   console.log(`GTM Workflow running on port ${PORT}`);
 });

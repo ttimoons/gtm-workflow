@@ -1,7 +1,6 @@
 import type { Project } from '../store/types';
 
 const ACTIVE_KEY = 'gtm-workflow-active';
-const LOCAL_STORAGE_KEY = 'gtm-workflow-projects';
 
 /* ── Filename helper ──────────────────────────────────────────── */
 
@@ -16,164 +15,109 @@ function toFilename(name: string): string {
   return `${FILENAME_PREFIX}${slug}.json`;
 }
 
-/* ── File-based save via dev-server API ────────────────────────── */
+/* ── Save project to server (→ Drive) ─────────────────────────── */
 
 export async function saveProject(project: Project): Promise<void> {
   const filename = toFilename(project.name);
   const json = JSON.stringify(project, null, 2);
 
-  try {
-    const res = await fetch(`/api/projects/${filename}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: json,
-    });
-    if (res.ok) {
-      // Handle rename: delete old file if name changed
-      const oldFilename = localStorage.getItem(`gtm-file-${project.id}`);
-      if (oldFilename && oldFilename !== filename) {
-        fetch(`/api/projects/${oldFilename}`, { method: 'DELETE' }).catch(() => {});
-      }
-      localStorage.setItem(`gtm-file-${project.id}`, filename);
-      localStorage.setItem(ACTIVE_KEY, project.id);
-      return;
-    }
-  } catch {
-    // API not available — fall back to localStorage
+  const res = await fetch(`/api/projects/${filename}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'same-origin',
+    body: json,
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error(err.error || 'Failed to save project');
   }
 
-  // Fallback: localStorage
-  const projects = getAllLocalProjects();
-  const idx = projects.findIndex((p) => p.id === project.id);
-  if (idx >= 0) {
-    projects[idx] = project;
-  } else {
-    projects.push(project);
+  // Track filename mapping for rename detection
+  const oldFilename = localStorage.getItem(`gtm-file-${project.id}`);
+  if (oldFilename && oldFilename !== filename) {
+    fetch(`/api/projects/${oldFilename}`, {
+      method: 'DELETE',
+      credentials: 'same-origin',
+    }).catch(() => {});
   }
-  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(projects));
+  localStorage.setItem(`gtm-file-${project.id}`, filename);
   localStorage.setItem(ACTIVE_KEY, project.id);
 }
 
-/* ── Load projects — live directory scan, manifest fallback ───── */
+/* ── Load projects from server (→ Drive) ──────────────────────── */
 
 type ProjectWithFilename = Project & { _filename?: string };
 
-async function loadFileProjectsLive(): Promise<ProjectWithFilename[] | null> {
+export async function loadFileProjects(): Promise<ProjectWithFilename[]> {
   try {
-    const res = await fetch(`/api/projects?t=${Date.now()}`);
-    if (!res.ok) return null;
-    const data: { projects: ProjectWithFilename[] } = await res.json();
-    return data.projects ?? [];
-  } catch {
-    return null;
-  }
-}
-
-async function loadFileProjectsFromManifest(): Promise<Project[]> {
-  try {
-    const res = await fetch(`/projects/manifest.json?t=${Date.now()}`);
+    const res = await fetch(`/api/projects?t=${Date.now()}`, {
+      credentials: 'same-origin',
+    });
     if (!res.ok) return [];
-    const manifest: { files: string[] } = await res.json();
+    const data: { projects: ProjectWithFilename[] } = await res.json();
+    const projects = data.projects ?? [];
 
-    const projects = await Promise.all(
-      manifest.files.map(async (file) => {
-        try {
-          const r = await fetch(`/projects/${file}?t=${Date.now()}`);
-          if (!r.ok) return null;
-          return (await r.json()) as Project;
-        } catch {
-          return null;
-        }
-      })
-    );
-
-    return projects.filter((p): p is Project => p !== null);
+    // Deduplicate by project ID — keep the most recently updated copy
+    const byId = new Map<string, ProjectWithFilename>();
+    for (const p of projects) {
+      const existing = byId.get(p.id);
+      if (!existing || (p.updatedAt && (!existing.updatedAt || p.updatedAt > existing.updatedAt))) {
+        byId.set(p.id, p);
+      }
+    }
+    return Array.from(byId.values());
   } catch {
     return [];
   }
-}
-
-export async function loadFileProjects(): Promise<ProjectWithFilename[]> {
-  // Prefer live endpoint (dev server), fall back to manifest only when API is unavailable.
-  const live = await loadFileProjectsLive();
-  if (live !== null) return live;
-  return loadFileProjectsFromManifest();
 }
 
 /* ── Load a single project by ID ───────────────────────────────── */
 
 export async function loadProject(id: string): Promise<Project | null> {
   const projects = await loadFileProjects();
-  const fromFile = projects.find((p) => p.id === id);
-  if (fromFile) return fromFile;
-
-  const local = getAllLocalProjects();
-  return local.find((p) => p.id === id) ?? null;
+  return projects.find((p) => p.id === id) ?? null;
 }
 
 /* ── Get all projects ──────────────────────────────────────────── */
 
 export async function getAllProjects(): Promise<ProjectWithFilename[]> {
-  const fileProjects = await loadFileProjects();
-  const fileIds = new Set(fileProjects.map((p) => p.id));
-
-  // Only include localStorage projects that don't exist as files
-  const localOnly = getAllLocalProjects()
-    .filter((p) => !fileIds.has(p.id));
-
-  return [...fileProjects, ...localOnly];
+  return loadFileProjects();
 }
 
 /* ── Delete a project ──────────────────────────────────────────── */
 
 export async function deleteProject(id: string): Promise<void> {
-  const deletedFiles = new Set<string>();
-
-  // 1. Try by stored filename in localStorage
+  // 1. Try by stored filename
   const storedFilename = localStorage.getItem(`gtm-file-${id}`);
   if (storedFilename) {
-    try {
-      await fetch(`/api/projects/${storedFilename}`, { method: 'DELETE' });
-      deletedFiles.add(storedFilename);
-    } catch { /* ignore */ }
+    await fetch(`/api/projects/${storedFilename}`, {
+      method: 'DELETE',
+      credentials: 'same-origin',
+    }).catch(() => {});
     localStorage.removeItem(`gtm-file-${id}`);
   }
 
-  // 2. Try by _filename from live endpoint (handles renames, missing localStorage)
-  try {
-    const projects = await loadFileProjects();
-    const proj = projects.find((p) => p.id === id);
-    if (proj?._filename && !deletedFiles.has(proj._filename)) {
-      await fetch(`/api/projects/${proj._filename}`, { method: 'DELETE' });
-      deletedFiles.add(proj._filename);
-    }
-    // 3. Also try derived filename from project name
-    if (proj) {
-      const derived = toFilename(proj.name);
-      if (!deletedFiles.has(derived)) {
-        await fetch(`/api/projects/${derived}`, { method: 'DELETE' });
-      }
-    }
-  } catch { /* ignore */ }
-
-  // 4. Last resort: ask server to delete by project ID (scans all files)
-  if (deletedFiles.size === 0) {
-    try {
-      await fetch(`/api/projects/_byid_${encodeURIComponent(id)}.json`, { method: 'DELETE' });
-    } catch { /* ignore */ }
+  // 2. Try by _filename from list
+  const projects = await loadFileProjects();
+  const proj = projects.find((p) => p.id === id);
+  if (proj?._filename && proj._filename !== storedFilename) {
+    await fetch(`/api/projects/${proj._filename}`, {
+      method: 'DELETE',
+      credentials: 'same-origin',
+    }).catch(() => {});
   }
 
-  // 5. Always clean up localStorage
-  const localProjects = getAllLocalProjects().filter((p) => p.id !== id);
-  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(localProjects));
+  // 3. Fallback: delete by project ID
+  if (!storedFilename && !proj?._filename) {
+    await fetch(`/api/projects/_byid_${encodeURIComponent(id)}.json`, {
+      method: 'DELETE',
+      credentials: 'same-origin',
+    }).catch(() => {});
+  }
 }
 
-/* ── localStorage helpers (fallback only) ─────────────────────── */
-
-function getAllLocalProjects(): Project[] {
-  const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
-  return raw ? JSON.parse(raw) : [];
-}
+/* ── Active project tracking ──────────────────────────────────── */
 
 export function getActiveProjectId(): string | null {
   return localStorage.getItem(ACTIVE_KEY);

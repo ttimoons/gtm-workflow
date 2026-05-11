@@ -1,13 +1,9 @@
 /**
- * Google Drive backup helpers.
+ * Google Drive helpers.
  *
- * All credentials come from environment variables:
- *   GDRIVE_CLIENT_ID
- *   GDRIVE_CLIENT_SECRET
- *   GDRIVE_REFRESH_TOKEN
- *   GDRIVE_FOLDER_ID    (optional — auto-created on first use if absent)
- *
- * Run scripts/gdrive-auth.js once to obtain the refresh token.
+ * Per-user Drive: createUserDriveOps(accessToken, refreshToken, userId)
+ * Uses the signed-in user's own OAuth tokens from their session.
+ * Each user's projects live in their own gtm-workflow-backups folder.
  */
 
 import { google } from 'googleapis';
@@ -16,113 +12,113 @@ import { Readable } from 'stream';
 const FOLDER_NAME = 'gtm-workflow-backups';
 const FOLDER_MIME = 'application/vnd.google-apps.folder';
 
-let driveClient = null;
-let cachedFolderId = null;
+const userFolderCache = new Map(); // userId (sub) → folderId
 
-export function isEnabled() {
-  return Boolean(
-    process.env.GDRIVE_CLIENT_ID &&
-    process.env.GDRIVE_CLIENT_SECRET &&
-    process.env.GDRIVE_REFRESH_TOKEN
-  );
-}
-
-function getDrive() {
-  if (driveClient) return driveClient;
+function makeOAuth2(accessToken, refreshToken) {
   const auth = new google.auth.OAuth2(
-    process.env.GDRIVE_CLIENT_ID,
-    process.env.GDRIVE_CLIENT_SECRET
+    process.env.AUTH_GOOGLE_CLIENT_ID,
+    process.env.AUTH_GOOGLE_CLIENT_SECRET,
   );
-  auth.setCredentials({ refresh_token: process.env.GDRIVE_REFRESH_TOKEN });
-  driveClient = google.drive({ version: 'v3', auth });
-  return driveClient;
+  auth.setCredentials({ access_token: accessToken, refresh_token: refreshToken });
+  return auth;
 }
 
-export async function ensureFolder() {
-  if (cachedFolderId) return cachedFolderId;
-  if (process.env.GDRIVE_FOLDER_ID) {
-    cachedFolderId = process.env.GDRIVE_FOLDER_ID;
-    return cachedFolderId;
-  }
-
-  const drive = getDrive();
+async function findOrCreateFolder(drive) {
   const list = await drive.files.list({
     q: `name='${FOLDER_NAME}' and mimeType='${FOLDER_MIME}' and trashed=false`,
     fields: 'files(id)',
+    spaces: 'drive',
     pageSize: 1,
   });
-  if (list.data.files && list.data.files.length > 0) {
-    cachedFolderId = list.data.files[0].id;
-    console.log(`[gdrive] Reusing folder ${FOLDER_NAME} (id=${cachedFolderId})`);
-  } else {
-    const created = await drive.files.create({
-      requestBody: { name: FOLDER_NAME, mimeType: FOLDER_MIME },
-      fields: 'id',
-    });
-    cachedFolderId = created.data.id;
-    console.log(`[gdrive] Created folder ${FOLDER_NAME} (id=${cachedFolderId})`);
-  }
-  console.log(`[gdrive] Pin this folder by setting GDRIVE_FOLDER_ID=${cachedFolderId}`);
-  return cachedFolderId;
-}
-
-async function findFile(filename, folderId) {
-  const drive = getDrive();
-  const escaped = filename.replace(/'/g, "\\'");
-  const res = await drive.files.list({
-    q: `name='${escaped}' and '${folderId}' in parents and trashed=false`,
-    fields: 'files(id, name)',
-    pageSize: 1,
+  if (list.data.files?.length) return list.data.files[0].id;
+  const created = await drive.files.create({
+    requestBody: { name: FOLDER_NAME, mimeType: FOLDER_MIME },
+    fields: 'id',
   });
-  return res.data.files && res.data.files[0] ? res.data.files[0] : null;
+  return created.data.id;
 }
 
-export async function uploadFile(filename, content, folderId) {
-  const drive = getDrive();
-  const existing = await findFile(filename, folderId);
-  const media = { mimeType: 'application/json', body: Readable.from([content]) };
+export function createUserDriveOps(accessToken, refreshToken, userId) {
+  const auth = makeOAuth2(accessToken, refreshToken);
+  const drive = google.drive({ version: 'v3', auth });
 
-  if (existing) {
-    await drive.files.update({ fileId: existing.id, media });
-  } else {
-    await drive.files.create({
-      requestBody: { name: filename, parents: [folderId] },
-      media,
-      fields: 'id',
-    });
+  async function getFolder() {
+    if (userFolderCache.has(userId)) return userFolderCache.get(userId);
+    const folderId = await findOrCreateFolder(drive);
+    userFolderCache.set(userId, folderId);
+    return folderId;
   }
-}
 
-export async function deleteFile(filename, folderId) {
-  const drive = getDrive();
-  const existing = await findFile(filename, folderId);
-  if (existing) {
-    await drive.files.delete({ fileId: existing.id });
-  }
-}
-
-export async function listFiles(folderId) {
-  const drive = getDrive();
-  const all = [];
-  let pageToken;
-  do {
+  async function findFile(filename) {
+    const folderId = await getFolder();
+    const escaped = filename.replace(/'/g, "\\'");
     const res = await drive.files.list({
-      q: `'${folderId}' in parents and trashed=false and mimeType='application/json'`,
-      fields: 'nextPageToken, files(id, name)',
-      pageSize: 1000,
-      pageToken,
+      q: `name='${escaped}' and '${folderId}' in parents and trashed=false`,
+      fields: 'files(id, name)',
+      pageSize: 1,
     });
-    all.push(...(res.data.files || []));
-    pageToken = res.data.nextPageToken;
-  } while (pageToken);
-  return all;
-}
+    return res.data.files?.[0] ?? null;
+  }
 
-export async function downloadFile(fileId) {
-  const drive = getDrive();
-  const res = await drive.files.get(
-    { fileId, alt: 'media' },
-    { responseType: 'text' }
-  );
-  return typeof res.data === 'string' ? res.data : JSON.stringify(res.data);
+  return {
+    async listProjects() {
+      const folderId = await getFolder();
+      const res = await drive.files.list({
+        q: `'${folderId}' in parents and trashed=false and mimeType='application/json'`,
+        fields: 'files(id, name)',
+        pageSize: 1000,
+      });
+      return Promise.all(
+        (res.data.files || []).map(async (f) => {
+          try {
+            const content = await drive.files.get(
+              { fileId: f.id, alt: 'media' },
+              { responseType: 'json' },
+            );
+            return { ...content.data, _filename: f.name };
+          } catch { return null; }
+        })
+      ).then(results => results.filter(Boolean));
+    },
+
+    async uploadProject(filename, content) {
+      const folderId = await getFolder();
+      const existing = await findFile(filename);
+      const media = { mimeType: 'application/json', body: Readable.from([content]) };
+      if (existing) {
+        await drive.files.update({ fileId: existing.id, media });
+      } else {
+        await drive.files.create({
+          requestBody: { name: filename, parents: [folderId] },
+          media,
+          fields: 'id',
+        });
+      }
+    },
+
+    async deleteProject(filename) {
+      const existing = await findFile(filename);
+      if (existing) await drive.files.delete({ fileId: existing.id });
+    },
+
+    async deleteProjectById(targetId) {
+      const folderId = await getFolder();
+      const res = await drive.files.list({
+        q: `'${folderId}' in parents and trashed=false and mimeType='application/json'`,
+        fields: 'files(id)',
+        pageSize: 1000,
+      });
+      for (const f of res.data.files || []) {
+        try {
+          const content = await drive.files.get(
+            { fileId: f.id, alt: 'media' },
+            { responseType: 'json' },
+          );
+          if (content.data?.id === targetId) {
+            await drive.files.delete({ fileId: f.id });
+          }
+        } catch { /* skip */ }
+      }
+    },
+  };
 }

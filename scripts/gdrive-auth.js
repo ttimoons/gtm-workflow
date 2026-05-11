@@ -24,25 +24,28 @@ const REDIRECT_URI = `http://localhost:${PORT}/oauth2callback`;
 const SCOPES = ['https://www.googleapis.com/auth/drive.file'];
 
 function findClientSecretFile() {
-  const file = readdirSync('.').find((f) => /^client_secret.*\.json$/.test(f));
-  if (!file) {
-    console.error('❌ No client_secret_*.json file found in app root.');
-    console.error('   Download your OAuth client credentials from Google Cloud Console');
-    console.error('   and place the JSON file in the project root.');
-    process.exit(1);
-  }
-  return file;
+  return readdirSync('.').find((f) => /^client_secret.*\.json$/.test(f)) || null;
 }
 
-function loadCredentials(file) {
-  const raw = JSON.parse(readFileSync(file, 'utf-8'));
-  // Google download has either { web: {...} } or { installed: {...} }
-  const creds = raw.web || raw.installed;
-  if (!creds || !creds.client_id || !creds.client_secret) {
-    console.error(`❌ Invalid credentials file ${file}`);
-    process.exit(1);
+function loadCredentials() {
+  // Prefer JSON file if present
+  const file = findClientSecretFile();
+  if (file) {
+    const raw = JSON.parse(readFileSync(file, 'utf-8'));
+    const creds = raw.web || raw.installed;
+    if (creds?.client_id && creds?.client_secret) return creds;
   }
-  return creds;
+  // Fall back to env vars (GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET)
+  const client_id = process.env.GOOGLE_CLIENT_ID;
+  const client_secret = process.env.GOOGLE_CLIENT_SECRET;
+  if (client_id && client_secret) {
+    console.log('ℹ️  Using credentials from GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET env vars.\n');
+    return { client_id, client_secret };
+  }
+  console.error('❌ No credentials found. Either:');
+  console.error('   • Place a client_secret_*.json file in the project root, OR');
+  console.error('   • Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in your environment.');
+  process.exit(1);
 }
 
 function openBrowser(url) {
@@ -52,8 +55,7 @@ function openBrowser(url) {
 }
 
 async function main() {
-  const file = findClientSecretFile();
-  const { client_id, client_secret } = loadCredentials(file);
+  const { client_id, client_secret } = loadCredentials();
 
   const oauth2 = new google.auth.OAuth2(client_id, client_secret, REDIRECT_URI);
   const authUrl = oauth2.generateAuthUrl({
@@ -141,10 +143,17 @@ GDRIVE_FOLDER_ID=${folderId}
   console.log(envBlock);
   console.log('────────────────────────────────────────────────────────────────\n');
 
-  // Also offer to write/update .env automatically
-  const envPath = '.env';
+  // Also offer to write/update .env.local automatically
+  const envPath = '.env.local';
   if (existsSync(envPath)) {
-    console.log(`ℹ️  .env already exists — not overwriting. Merge the values above manually.`);
+    // Append GDRIVE vars to .env.local if not already present
+    const existing = readFileSync(envPath, 'utf-8');
+    if (!existing.includes('GDRIVE_CLIENT_ID')) {
+      writeFileSync(envPath, existing.trimEnd() + '\n\n# Google Drive backup\n' + envBlock);
+      console.log(`✅ Appended GDRIVE_* vars to ${envPath}`);
+    } else {
+      console.log(`ℹ️  ${envPath} already contains GDRIVE_* vars — update manually if needed.`);
+    }
   } else {
     writeFileSync(envPath, envBlock);
     console.log(`✅ Wrote ${envPath}`);
