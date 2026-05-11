@@ -4,7 +4,7 @@ import { useFlowStore } from '../store/useFlowStore';
 import type { TagType } from '../store/types';
 import type { AuditResult, ScriptRecord, ScanStage, SSEEvent } from '../types/scanner';
 
-const API_BASE_URL = 'http://127.0.0.1:5001';
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:7182';
 
 // Vendor name → tag node type. Vendors not listed here are skipped on import
 // (CDNs, generic libs, etc. don't map to meaningful canvas nodes).

@@ -12,7 +12,7 @@ import { join, extname } from 'path';
 import { createUserDriveOps } from './gdrive.js';
 import { handleAuthRoutes, getSession, isAuthEnabled } from './auth.js';
 
-const PORT = process.env.PORT || 3000;
+const PORT = Number(process.env.PORT) || 7181;
 const STATIC_DIR = new URL('./dist', import.meta.url).pathname;
 
 const MIME = {

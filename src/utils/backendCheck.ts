@@ -4,7 +4,7 @@
  * (e.g., domain scanner)
  */
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001';
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:7182';
 const HEALTH_ENDPOINT = `${BACKEND_URL}/health`;
 
 let backendAvailable: boolean | null = null;

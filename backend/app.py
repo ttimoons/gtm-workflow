@@ -137,6 +137,8 @@ def stream(job_id: str):
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    print("Starting GTM Workflow API server at http://127.0.0.1:5001")
+    import os
+    port = int(os.environ.get("PORT", 7182))
+    print(f"Starting GTM Workflow API server at http://127.0.0.1:{port}")
     print("CORS enabled for frontend integration")
-    app.run(debug=False, threaded=True, port=5001, host="127.0.0.1")
+    app.run(debug=False, threaded=True, port=port, host="127.0.0.1")
