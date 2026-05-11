@@ -5,6 +5,7 @@
  */
 
 import { getAccessToken, refreshToken } from './googleAuth';
+import type { Project } from '../store/types';
 
 const FOLDER_NAME = 'gtm-workflow-backups';
 const FOLDER_MIME = 'application/vnd.google-apps.folder';
@@ -78,13 +79,7 @@ async function findOrCreateFolder(): Promise<string> {
 
 /* ── Public API ──────────────────────────────────────────────── */
 
-export type DriveProject = {
-  id: string;
-  name: string;
-  nodes: unknown[];
-  edges: unknown[];
-  createdAt?: string;
-  updatedAt?: string;
+export type DriveProject = Project & {
   _driveFileId?: string;
   _filename?: string;
 };
