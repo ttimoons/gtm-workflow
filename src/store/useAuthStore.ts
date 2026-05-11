@@ -1,19 +1,21 @@
 import { create } from 'zustand';
-
-type User = {
-  email: string;
-  name?: string;
-  picture?: string;
-};
+import {
+  signIn as gisSignIn,
+  signOut as gisSignOut,
+  getStoredSession,
+  isConfigured,
+  type GoogleUser,
+} from '../utils/googleAuth';
+import { clearFolderCache } from '../utils/driveApi';
 
 type AuthState = {
   isAuthenticated: boolean;
   isLoading: boolean;
-  user: User | null;
+  user: GoogleUser | null;
   error: string | null;
   checkAuth: () => Promise<void>;
-  signIn: () => void;
-  logout: () => Promise<void>;
+  signIn: () => Promise<void>;
+  logout: () => void;
 };
 
 export const useAuthStore = create<AuthState>()((set) => ({
@@ -23,37 +25,37 @@ export const useAuthStore = create<AuthState>()((set) => ({
   error: null,
 
   checkAuth: async () => {
-    try {
-      const res = await fetch('/api/auth/me', { credentials: 'same-origin' });
-      if (!res.ok) {
-        set({ isAuthenticated: false, user: null, isLoading: false });
-        return;
-      }
-      const data = await res.json();
-      if (data.authenticated) {
-        set({
-          isAuthenticated: true,
-          user: { email: data.email, name: data.name, picture: data.picture },
-          isLoading: false,
-          error: null,
-        });
-      } else {
-        set({ isAuthenticated: false, user: null, isLoading: false });
-      }
-    } catch {
+    if (!isConfigured()) {
+      set({ isAuthenticated: false, isLoading: false, error: 'VITE_GOOGLE_CLIENT_ID not configured' });
+      return;
+    }
+    const session = getStoredSession();
+    if (session) {
+      set({
+        isAuthenticated: true,
+        user: session.user,
+        isLoading: false,
+        error: null,
+      });
+    } else {
       set({ isAuthenticated: false, user: null, isLoading: false });
     }
   },
 
-  signIn: () => {
-    window.location.href = '/api/auth/google';
+  signIn: async () => {
+    try {
+      set({ error: null });
+      const { user } = await gisSignIn();
+      set({ isAuthenticated: true, user, error: null });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Sign-in failed';
+      set({ error: msg });
+    }
   },
 
-  logout: async () => {
-    try {
-      await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' });
-    } catch { /* ignore */ }
+  logout: () => {
+    gisSignOut();
+    clearFolderCache();
     set({ isAuthenticated: false, user: null });
-    window.location.href = '/';
   },
 }));
